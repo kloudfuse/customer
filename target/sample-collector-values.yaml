@@ -1,0 +1,100 @@
+opentelemetry-collector:
+  config:
+    exporters:
+      logging:
+        verbosity: basic
+      otlphttp/customer:
+        metrics_endpoint: ${CUSTOMER_METRICS_ENDPOINT}
+        traces_endpoint: ${CUSTOMER_TRACES_ENDPOINT}
+      otlphttp/kfendpoint:
+        metrics_endpoint: ${KF_METRICS_ENDPOINT}
+        traces_endpoint: ${KF_TRACES_ENDPOINT}
+    extensions:
+      health_check: {}
+      memory_ballast:
+        size_in_percentage: 40
+    processors:
+      batch:
+        timeout: 10s
+      memory_limiter:
+        check_interval: 5s
+        limit_percentage: 80
+        spike_limit_percentage: 25
+      resourcedetection:
+        detectors:
+          - env
+          - aws
+          - gcp
+          - azure
+        override: false
+        timeout: 2s
+    receivers:
+      otlp:
+        protocols:
+          grpc:
+            endpoint: ${env:MY_POD_IP}:4317
+          http:
+            cors:
+              allowed_origins:
+                - http://*
+                - https://*
+            endpoint: 0.0.0.0:4318
+      prometheus:
+        config:
+          scrape_configs:
+            - job_name: opentelemetry-collector
+              scrape_interval: 10s
+              static_configs:
+                - targets:
+                    - ${env:MY_POD_IP}:8888
+    service:
+      extensions:
+        - health_check
+        - memory_ballast
+      pipelines:
+        metrics/telemetry:
+          exporters:
+            - otlphttp/customer
+            - otlphttp/kfendpoint
+          processors:
+            - memory_limiter
+            - batch
+            - resourcedetection
+          receivers:
+            - prometheus
+        metrics:
+          exporters:
+            - logging
+            - otlphttp/customer
+          processors:
+            - memory_limiter
+            - batch
+            - resourcedetection
+          receivers:
+            - otlp
+            - prometheus
+        traces:
+          exporters:
+            - otlphttp/customer
+          processors:
+            - batch
+            - resourcedetection
+          receivers:
+            - otlp
+      telemetry:
+        metrics:
+          address: ${MY_POD_IP}:8888
+  mode: daemonset
+  nameOverride: otelcol
+  ports:
+    metrics:
+      enabled: true
+    otlp:
+      enabled: true
+    otlp-http:
+      enabled: true
+  presets:
+    kubernetesAttributes:
+      enabled: true
+
+  resources: {}
