@@ -49,5 +49,3 @@ while [ $i -lt $n ]; do
   kubectl apply -f $NEW_PVC_MANIFEST_FILE
   i=$((i + 1))
 done
-
-kubectl delete sts "kafka"
