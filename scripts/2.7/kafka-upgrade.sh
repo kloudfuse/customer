@@ -10,13 +10,8 @@ then
   exit 1
 fi
 
-broker=$1
-namespace=$2
-
-if [ -z "$broker" ]; then
-echo "Usage: ./kafka-upgrade.sh <number of kafka pods> [namespace]"
-exit 1
-fi
+broker_count=$(kubectl get sts kafka -o json | jq ".spec.replicas")
+namespace=$1
 
 if [ -z "$namespace" ]; then
   namespace="kfuse"
@@ -24,7 +19,7 @@ fi
 
 i=0
 
-while [ $i -lt $broker ]; do
+while [ $i -lt $broker_count ]; do
   REPLICA=$i
   OLD_PVC="data-kafka-${REPLICA}"
   PV_NAME=$(kubectl -n $namespace get pvc $OLD_PVC -o jsonpath="{.spec.volumeName}")
@@ -53,8 +48,9 @@ while [ $i -lt $broker ]; do
   cat $NEW_PVC_MANIFEST_FILE
 
   # Modify PV reclaim policy and remove claim reference
-  kubectl -n $namespace patch pv $PV_NAME -p '{"spec":{"persistentVolumeReclaimPolicy":"Retain"}}'
-  kubectl -n $namespace patch pv $PV_NAME -p '{"spec":{"claimRef": null}}'
+  kubectl -n $namespace patch pv $PV_NAME -p '{"spec":{"persistentVolumeReclaimPolicy":"Retain", "claimRef": null}}'
+
+  # Create new PVC
   kubectl -n $namespace apply -f $NEW_PVC_MANIFEST_FILE
   i=$((i + 1))
 done
@@ -62,15 +58,13 @@ done
 kubectl delete sts kafka --wait=true
 
 i=0
-while [ $i -lt $broker ]; do
+while [ $i -lt $broker_count ]; do
   REPLICA=$i
   OLD_PVC="data-kafka-${REPLICA}"
   NEW_PVC="data-kafka-broker-${REPLICA}"
-  NEW_PVC_MANIFEST_FILE="$NEW_PVC.yaml"
   PV_NAME=$(kubectl -n $namespace get pvc $NEW_PVC -o jsonpath="{.spec.volumeName}")
 
-  # Create the new PVC, change the PV reclaim policy and delete the old pvc
-  kubectl -n $namespace apply -f $NEW_PVC_MANIFEST_FILE
+  # Change the PV reclaim policy and delete the old pvc
   kubectl -n $namespace patch pv $PV_NAME -p '{"spec":{"persistentVolumeReclaimPolicy":"Delete"}}'
   kubectl -n $namespace delete pvc $OLD_PVC
 
