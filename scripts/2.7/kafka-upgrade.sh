@@ -10,13 +10,13 @@ then
   exit 1
 fi
 
-broker_count=$(kubectl get sts kafka -o json | jq ".spec.replicas")
 namespace=$1
 
 if [ -z "$namespace" ]; then
   namespace="kfuse"
 fi
 
+broker_count=$(kubectl -n $namespace get sts kafka -o json | jq ".spec.replicas")
 i=0
 
 while [ $i -lt $broker_count ]; do
@@ -55,7 +55,7 @@ while [ $i -lt $broker_count ]; do
   i=$((i + 1))
 done
 
-kubectl delete sts kafka --wait=true
+kubectl -n $namespace delete sts kafka --wait=true
 
 i=0
 while [ $i -lt $broker_count ]; do
