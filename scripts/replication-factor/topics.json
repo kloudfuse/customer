@@ -1,10 +1,7 @@
 {
   "topics": [
     {
-      "topic": "logs_ingest_topic"
-    },
-    {
-    "topic": "kf_logs_topic"
+      "topic": "__transaction_state"
     }
   ],
   "version": 1
