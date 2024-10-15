@@ -28,13 +28,14 @@ do
       echo "failed to patch pvc. can not move forward."
       exit 1
     fi
+    echo "saving old sts $sts_name yaml"
+    kubectl -n $namespace get sts $sts_name -o yaml > old_$sts_name.yaml
+    echo "creating updated sts $sts_name yaml"
+    sed "s/storage:.*/storage: $size/g" old_$sts_name.yaml > updated_$sts_name.yaml
     echo "kubectl delete sts $sts_name --cascade=orphan -n $namespace"
     kubectl delete sts $sts_name --cascade=orphan -n $namespace
-    echo Run helm upgrade to redeploy the statefulset with the updated disk size
-    echo If resizing the PVC on observe cluster, use the ToT of staging branch,
-    echo update the observe.yaml locally and then do the helm upgrade with the
-    echo checked in version.
-    echo Check-in the updated observe.yaml on main branch only so that it gets picked up
-    echo  on the next full upgrade of observe cluster.
+    echo "applying updated $sts_name yaml"
+    kubectl apply -f updated_$sts_name.yaml
+    echo Make sure that the helm values.yaml reflects the updated disk size.
   done
 done
