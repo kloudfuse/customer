@@ -1,0 +1,11 @@
+{
+  "topics": [
+    {
+      "topic": "logs_ingest_topic"
+    },
+    {
+    "topic": "kf_logs_topic"
+    }
+  ],
+  "version": 1
+}
