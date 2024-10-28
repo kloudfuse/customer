@@ -1,0 +1,8 @@
+This script is a helper to add favorites for all sources in the system.
+
+It simply iterator through all sources, for each source, gets facets and adds it as a favorite.
+
+To run it, simple port-forward logs-query-service and run it against it.
+```
+python3 add_favorite_facets.py http://localhost:62938/query
+```
