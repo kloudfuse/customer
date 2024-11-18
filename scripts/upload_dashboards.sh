@@ -12,7 +12,7 @@ function upload_dashboards() {
    for FILENAME in $MODIFIED_DASHBOARD_DIR/*.json; do
      OUT=$(cat $FILENAME | jq --arg new_folder_id $NEW_FOLDER_ID\
 	     '. * {overwrite: true, folderId: $new_folder_id|tonumber|floor,  dashboard: {id: null, uid: null}}'\
-	     | curl --fail -X POST -H "Content-Type: application/json"\
+	     | curl --fail -o /dev/null -X POST -H "Content-Type: application/json"\
 	     --user "$GRAFANA_USER:$GRAFANA_PASSWORD" "$GRAFANA_SERVER/api/dashboards/db"\
 	     --write-out '%{http_code}' -d @- )
      if [ -z $OUT -o $OUT -gt 202 ]; then
