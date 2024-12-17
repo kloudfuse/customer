@@ -17,7 +17,7 @@ logger = logging.getLogger()
 logger.setLevel(logging.getLevelName(os.environ.get("KF_LOG_LEVEL", "INFO").upper()))
 logger.info("Loading function")
 
-KFUSE_ENDPOINT = os.getenv("KFUSE_ENDPOINT", default="https://pisco.kloudfuse.io/ingester")
+KFUSE_ENDPOINT = os.getenv("KFUSE_ENDPOINT", default="<TBA>")
 
 
 def _kfuse_keys():
