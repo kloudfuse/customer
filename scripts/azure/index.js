@@ -172,7 +172,7 @@ class HTTPClient {
       headers: {
         "Content-Type": "application/json",
         "KF-EVP-ORIGIN": "azure",
-        "DD_API_KEY": KF_API_KEY,
+        "DD-API-KEY": KF_API_KEY,
       },
       timeout: KF_REQUEST_TIMEOUT_MS,
     };
