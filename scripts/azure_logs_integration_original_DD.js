@@ -18,6 +18,8 @@ const INVALID = "invalid";
 const JSON_TYPE = "json";
 const STRING_TYPE = "string";
 
+const KF_API_KEY = process.env.KF_API_KEY || "<KF_API_KEY>";
+const KF_URL = process.env.KF_URL || "<KF_HTTP_URL>";
 const KF_HTTP_PORT = process.env.KF_PORT || 443;
 const KF_REQUEST_TIMEOUT_MS = 10000;
 const KF_TAGS = process.env.KF_TAGS || ""; // Replace '' by your comma-separated list of tags
@@ -159,18 +161,18 @@ class Batcher {
   }
 }
 
-// Provide Kloudfuse URL in quotes for "hostname" where you want to send the logs to
 class HTTPClient {
   constructor(context) {
     this.context = context;
     this.httpOptions = {
-      hostname: "<Kloudfuse URL>",
+      hostname: KF_URL,
       port: KF_HTTP_PORT,
       path: "/api/v2/logs",
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         "KF-EVP-ORIGIN": "azure",
+        "KF_API_KEY_ENV": KF_API_KEY,
       },
       timeout: KF_REQUEST_TIMEOUT_MS,
     };
@@ -669,6 +671,12 @@ class EventhubLogHandler {
 }
 
 module.exports = async function (context, eventHubMessages) {
+  if (!KF_API_KEY || KF_API_KEY === "<KF_API_KEY>") {
+    context.log.error(
+      "You must configure your API key before starting this function (see ## Parameters section)"
+    );
+    return;
+  }
   try {
     var handler = new EventhubLogHandler(context);
     var parsedLogs = handler.handleLogs(eventHubMessages);
