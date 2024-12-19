@@ -18,16 +18,15 @@ const INVALID = "invalid";
 const JSON_TYPE = "json";
 const STRING_TYPE = "string";
 
-const DD_API_KEY = process.env.DD_API_KEY || "<DATADOG_API_KEY>";
-const DD_SITE = process.env.DD_SITE || "datadoghq.com";
-const DD_HTTP_URL = process.env.DD_URL || "http-intake.logs." + DD_SITE;
-const DD_HTTP_PORT = process.env.DD_PORT || 443;
-const DD_REQUEST_TIMEOUT_MS = 10000;
-const DD_TAGS = process.env.DD_TAGS || ""; // Replace '' by your comma-separated list of tags
-const DD_SERVICE = process.env.DD_SERVICE || "azure";
-const DD_SOURCE = process.env.DD_SOURCE || "azure";
-const DD_SOURCE_CATEGORY = process.env.DD_SOURCE_CATEGORY || "azure";
-const DD_PARSE_DEFENDER_LOGS = process.env.DD_PARSE_DEFENDER_LOGS; // Boolean whether to enable special parsing of Defender for Cloud logs. Set to 'false' to disable
+const KF_API_KEY = process.env.KF_API_KEY || "<KF_API_KEY>";
+const KF_URL = process.env.KF_URL || "<KF_HTTP_URL>";
+const KF_HTTP_PORT = process.env.KF_PORT || 443;
+const KF_REQUEST_TIMEOUT_MS = 10000;
+const KF_TAGS = process.env.KF_TAGS || ""; // Replace '' by your comma-separated list of tags
+const KF_SERVICE = process.env.KF_SERVICE || "azure";
+const KF_SOURCE = process.env.KF_SOURCE || "azure";
+const KF_SOURCE_CATEGORY = process.env.KF_SOURCE_CATEGORY || "azure";
+const KF_PARSE_DEFENDER_LOGS = process.env.KF_PARSE_DEFENDER_LOGS; // Boolean whether to enable special parsing of Defender for Cloud logs. Set to 'false' to disable
 
 const MAX_RETRIES = 4; // max number of times to retry a single http request
 const RETRY_INTERVAL = 250; // amount of time (milliseconds) to wait before retrying request, doubles after every retry
@@ -80,9 +79,9 @@ a potential use case with azure.datafactory is there to show the format:
     keep_original_log: bool, if you'd like to preserve the original log in addition to the split ones or not,
     preserve_fields: bool, whether or not to keep the original log fields in the new split logs
 }
-You can also set the DD_LOG_SPLITTING_CONFIG env var with a JSON string in this format.
+You can also set the KF_LOG_SPLITTING_CONFIG env var with a JSON string in this format.
 */
-const DD_LOG_SPLITTING_CONFIG = {
+const KF_LOG_SPLITTING_CONFIG = {
   // 'azure.datafactory': {
   //     paths: [['properties', 'Output', 'value']],
   //     keep_original_log: true,
@@ -92,18 +91,18 @@ const DD_LOG_SPLITTING_CONFIG = {
 
 function getLogSplittingConfig() {
   try {
-    return JSON.parse(process.env.DD_LOG_SPLITTING_CONFIG);
+    return JSON.parse(process.env.KF_LOG_SPLITTING_CONFIG);
   } catch {
-    return DD_LOG_SPLITTING_CONFIG;
+    return KF_LOG_SPLITTING_CONFIG;
   }
 }
 
 function shouldParseDefenderForCloudLogs() {
   // Default to true if the env variable is not set, is null, etc
-  if (typeof DD_PARSE_DEFENDER_LOGS !== "string") {
+  if (typeof KF_PARSE_DEFENDER_LOGS !== "string") {
     return true;
   }
-  const parse_defender_logs = DD_PARSE_DEFENDER_LOGS.toLowerCase();
+  const parse_defender_logs = KF_PARSE_DEFENDER_LOGS.toLowerCase();
   return !(parse_defender_logs === "false" || parse_defender_logs === "f");
 }
 
@@ -166,16 +165,16 @@ class HTTPClient {
   constructor(context) {
     this.context = context;
     this.httpOptions = {
-      hostname: DD_HTTP_URL,
-      port: DD_HTTP_PORT,
+      hostname: KF_URL,
+      port: KF_HTTP_PORT,
       path: "/api/v2/logs",
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "DD-API-KEY": DD_API_KEY,
-        "DD-EVP-ORIGIN": "azure",
+        "KF-EVP-ORIGIN": "azure",
+        "DD-API-KEY": KF_API_KEY,
       },
-      timeout: DD_REQUEST_TIMEOUT_MS,
+      timeout: KF_REQUEST_TIMEOUT_MS,
     };
     this.scrubber = new Scrubber(this.context, SCRUBBER_RULE_CONFIGS);
     this.batcher = new Batcher(this.context, 256 * 1000, 4 * 1000 * 1000, 400);
@@ -237,7 +236,7 @@ class HTTPClient {
           })
           .on("timeout", () => {
             req.destroy();
-            retryRequest(`request timed out after ${DD_REQUEST_TIMEOUT_MS}ms`);
+            retryRequest(`request timed out after ${KF_REQUEST_TIMEOUT_MS}ms`);
           });
         req.write(this.scrubber.scrub(JSON.stringify(record)));
         req.end();
@@ -307,12 +306,19 @@ class EventhubLogHandler {
 
   formatLog(messageType, record) {
     if (messageType == JSON_TYPE) {
+      const rawRecord = { ...record };
       var originalRecord = this.addTagsToJsonLog(record);
+      originalRecord["message"] = JSON.stringify(rawRecord);
+
       // normalize the host field. Azure EventHub sends it as "Host".
       if (originalRecord.Host) {
         originalRecord.host = originalRecord.Host;
       }
+
       var source = originalRecord["ddsource"];
+
+      originalRecord["timestamp"] = originalRecord["time"];
+
       var config = this.logSplittingConfig[source];
       if (config !== undefined) {
         var splitFieldFound = false;
@@ -373,6 +379,7 @@ class EventhubLogHandler {
         }
       } else {
         this.records.push(originalRecord);
+        // this.context.log("RECORD", this.records);
       }
     } else {
       record = this.addTagsToStringLog(record);
@@ -485,20 +492,38 @@ class EventhubLogHandler {
     }
   }
 
-  createDDTags(tags) {
+  createKFTags(tags, record) {
     const forwarderNameTag =
       "forwardername:" + this.context.executionContext.functionName;
     const fowarderVersionTag = "forwarderversion:" + VERSION;
-    var ddTags = tags.concat([DD_TAGS, forwarderNameTag, fowarderVersionTag]);
+
+    const optionaltags = [];
+    if (record["properties"].pod) {
+      optionaltags.push("pod_name:" + record["properties"].pod);
+    }
+    if (record["properties"].containerID) {
+      optionaltags.push("container_id:" + record["properties"].containerID);
+    }
+    if (record["ddsource"] == "azure.kusto") {
+      if (record["properties"]?.Database) {
+        optionaltags.push("database:" + record["properties"].Database);
+      }
+    }
+    var ddTags = tags.concat([
+      KF_TAGS,
+      forwarderNameTag,
+      fowarderVersionTag,
+      optionaltags,
+    ]);
     return ddTags.filter(Boolean).join(",");
   }
 
   addTagsToJsonLog(record) {
     var [metadata, record] = this.extractMetadataFromLog(record);
-    record["ddsource"] = metadata.source || DD_SOURCE;
-    record["ddsourcecategory"] = DD_SOURCE_CATEGORY;
-    record["service"] = metadata.service || DD_SERVICE;
-    record["ddtags"] = this.createDDTags(metadata.tags);
+    record["ddsource"] = metadata.source || KF_SOURCE;
+    record["ddsourcecategory"] = KF_SOURCE_CATEGORY;
+    record["service"] = metadata.service || KF_SERVICE;
+    record["ddtags"] = this.createKFTags(metadata.tags, record);
     return record;
   }
 
@@ -646,7 +671,7 @@ class EventhubLogHandler {
 }
 
 module.exports = async function (context, eventHubMessages) {
-  if (!DD_API_KEY || DD_API_KEY === "<DATADOG_API_KEY>") {
+  if (!KF_API_KEY || KF_API_KEY === "<KF_API_KEY>") {
     context.log.error(
       "You must configure your API key before starting this function (see ## Parameters section)"
     );
