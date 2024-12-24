@@ -44,7 +44,7 @@ class PinotControllerClient(object):
     def get_segments_metadata(self, consuming_segments):
         segment_to_metadata_dict = dict()
         for segment in consuming_segments:
-            metadata = make_get_request(self.consuming_segments_url + "/" + segment)
+            metadata = make_get_request(self.segment_metadata_url + "/" + segment)
             if metadata['simpleFields']['segment.realtime.status'] == 'IN_PROGRESS':
                 segment_to_metadata_dict[segment] = metadata
             else:
@@ -56,8 +56,8 @@ class PinotControllerClient(object):
     def reset_segment_state(self, segment_to_metadata_dict):
         for segment, metadata in segment_to_metadata_dict.items():
             print("Consuming segment name={0}, startOffset={1}".format(
-                str(segment)), 
-                metadata['simpleFields']['segment.realtime.startOffset'])
+                str(segment),
+                metadata['simpleFields']['segment.realtime.startOffset']))
             metadata['simpleFields']['segment.realtime.startOffset'] = "0"
             metadata = json.dumps(metadata, indent=4)
             if not args.dry_run:
@@ -82,8 +82,11 @@ def parse_args():
                         type=str,
                         default="kf_logs_REALTIME", 
                         required=True,
-                        choices=['kf_logs_REALTIME', 
-                                 'kf_metrics_REALTIME', 
+                        choices=['kf_logs_REALTIME',
+                                 'kf_metrics_REALTIME',
+                                 'kf_events_REALTIME',
+                                 'kf_metrics_rollup_REALTIME',
+                                 'kf_traces_errors_REALTIME',
                                  'kf_traces_REALTIME'],
                         help="Specify Pinot Tables")
     return parser.parse_args()
