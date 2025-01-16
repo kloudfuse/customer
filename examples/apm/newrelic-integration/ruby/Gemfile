@@ -1,0 +1,4 @@
+source 'https://rubygems.org'
+
+gem 'webrick'       # Lightweight HTTP server library
+gem 'newrelic_rpm'  # New Relic APM library

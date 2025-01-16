@@ -1,0 +1,15 @@
+GEM
+  remote: https://rubygems.org/
+  specs:
+    newrelic_rpm (9.16.1)
+    webrick (1.9.1)
+
+PLATFORMS
+  ruby
+
+DEPENDENCIES
+  newrelic_rpm
+  webrick
+
+BUNDLED WITH
+   1.17.2
