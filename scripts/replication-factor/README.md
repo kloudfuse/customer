@@ -9,7 +9,8 @@
 3. Copy proposal.json out of kafka broker pod
    - kubectl cp kafka-broker-0:/tmp/proposal.json /tmp/proposal.json
 4. Run script to create new assignment plan
-   - python3 kafka_replication_increase.py --output /tmp/reassignment.json --num_brokers <number of kafka brokers> --proposal_file /tmp/proposal.json 
+   - python3 kafka_replication_increase.py --output /tmp/reassignment.json --num_brokers <number_of_kafka_brokers> --rf <desired_rf> --proposal_file /tmp/proposal.json
+   - above script will produce reassignment file /tmp/reassignment.json
 5. Copy new assignment plan into kafka broker pod
    - kubectl cp /tmp/reassignment.json kafka-broker-0:/tmp/reassignment.json
 6. Execute new assignment plan
