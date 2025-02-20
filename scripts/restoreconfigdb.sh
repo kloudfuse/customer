@@ -10,15 +10,17 @@ fi
 
 DBS=("alertsdb" "beffedb" "hydrationdb" "logsconfigdb" "rbacdb" "apmconfigdb")
 
+get_replica_count(){
+  local deployment=$1
+  local rs_name=$(kubectl describe deployment $deployment | grep "NewReplicaSet:" | awk '{print $2}')
+  local replicas=$(kubectl get rs $rs_name -o=jsonpath='{.metadata.annotations.original-replicas}')
+  echo "$rs_name $replicas"
+}
 # Function to get or set original replicas using ReplicaSet annotations
 get_or_set_replicas() {
     local deployment=$1
-    
-    # Get the newest ReplicaSet directly from deployment
-    RS_NAME=$(kubectl describe deployment $deployment | grep "NewReplicaSet:" | awk '{print $2}')
-    
-    # Try to get existing annotation first
-    ORIGINAL_REPLICAS=$(kubectl get rs $RS_NAME -o=jsonpath='{.metadata.annotations.original-replicas}' 2>/dev/null)
+    RS_NAME=$(get_replica_count $deployment | awk '{print $1}')
+    ORIGINAL_REPLICAS=$(get_replica_count $deployment | awk '{print $2}')
     
     if [ -z "$ORIGINAL_REPLICAS" ]; then
         # If annotation doesn't exist, get current replicas and set annotation
@@ -27,13 +29,6 @@ get_or_set_replicas() {
     fi
     
     echo $ORIGINAL_REPLICAS
-}
-
-get_replica_count(){
-  local deployment=$1
-  local rs_name=$(kubectl describe deployment $deployment | grep "NewReplicaSet:" | awk '{print $2}')
-  local replicas=$(kubectl get rs $rs_name -o=jsonpath='{.metadata.annotations.original-replicas}')
-  echo $replicas
 }
 
 scale_deployment() {
@@ -70,7 +65,7 @@ done
 
 echo "Scaling up services to original replica counts from ReplicaSet annotations..."
 for service in "${SERVICES[@]}"; do
-  replicas=$(get_replica_count $service)
+  replicas=$(get_replica_count $service | awk '{print $2}')
   scale_deployment $service $replicas
 done
 
