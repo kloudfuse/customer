@@ -29,15 +29,26 @@ get_or_set_replicas() {
     echo $ORIGINAL_REPLICAS
 }
 
-echo "Storing original replica counts in ReplicaSet annotations..."
-UMS_REPLICAS=$(get_or_set_replicas user-mgmt-service)
-GRAFANA_REPLICAS=$(get_or_set_replicas kfuse-grafana)
-TQS_REPLICAS=$(get_or_set_replicas trace-query-service)
+get_replica_count(){
+  local deployment=$1
+  local rs_name=$(kubectl describe deployment $deployment | grep "NewReplicaSet:" | awk '{print $2}')
+  local replicas=$(kubectl get rs $rs_name -o=jsonpath='{.metadata.annotations.original-replicas}')
+  echo $replicas
+}
 
-echo "Scaling down services..."
-kubectl scale deployment user-mgmt-service --replicas=0 >/dev/null 2>&1
-kubectl scale deployment kfuse-grafana --replicas=0 >/dev/null 2>&1
-kubectl scale deployment trace-query-service --replicas=0 >/dev/null 2>&1
+scale_deployment() {
+  local deployment=$1
+  local replicas=$2
+  kubectl scale deployment $deployment --replicas=$replicas >/dev/null 2>&1
+}
+
+SERVICES=("user-mgmt-service" "kfuse-grafana" "trace-query-service")
+
+echo "Storing original replica counts in ReplicaSet annotations..."
+for service in "${SERVICES[@]}"; do
+  get_or_set_replicas $service
+  scale_deployment $service 0
+done
 
 sleep 30  # Wait for services to scale down
 
@@ -55,16 +66,9 @@ for DB in "${DBS[@]}"; do
 done
 
 echo "Scaling up services to original replica counts from ReplicaSet annotations..."
-UMS_RS=$(kubectl describe deployment user-mgmt-service | grep "NewReplicaSet:" | awk '{print $2}')
-GRAFANA_RS=$(kubectl describe deployment kfuse-grafana | grep "NewReplicaSet:" | awk '{print $2}')
-TQS_RS=$(kubectl describe deployment trace-query-service | grep "NewReplicaSet:" | awk '{print $2}')
-
-UMS_REPLICAS=$(kubectl get rs $UMS_RS -o=jsonpath='{.metadata.annotations.original-replicas}')
-GRAFANA_REPLICAS=$(kubectl get rs $GRAFANA_RS -o=jsonpath='{.metadata.annotations.original-replicas}')
-TQS_REPLICAS=$(kubectl get rs $TQS_RS -o=jsonpath='{.metadata.annotations.original-replicas}')
-
-kubectl scale deployment user-mgmt-service --replicas=$UMS_REPLICAS >/dev/null 2>&1
-kubectl scale deployment kfuse-grafana --replicas=$GRAFANA_REPLICAS >/dev/null 2>&1
-kubectl scale deployment trace-query-service --replicas=$TQS_REPLICAS >/dev/null 2>&1
+for service in "${SERVICES[@]}"; do
+  replicas=$(get_replica_count $service)
+  scale_deployment $service $replicas
+done
 
 echo "Restore process completed!"
