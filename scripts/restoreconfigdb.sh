@@ -46,7 +46,10 @@ SERVICES=("user-mgmt-service" "kfuse-grafana" "trace-query-service")
 
 echo "Storing original replica counts in ReplicaSet annotations..."
 for service in "${SERVICES[@]}"; do
-  get_or_set_replicas $service
+  if ! get_or_set_replicas $service; then
+        echo "Failed to process replica count for $service. Exiting." >&2
+    exit 1
+  fi
   scale_deployment $service 0
 done
 
