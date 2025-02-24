@@ -207,7 +207,13 @@ class GrafanaClient:
             return None, False
 
         new_rules = []
-        rules = existing_alerts[0][folder_name][0]["rules"]
+        try:
+            rules = existing_alerts[0][folder_name][0]["rules"]
+        except KeyError:
+            # Skip this if the key does not exist
+            rules = None
+            log.debug("KeyError: Skipping folder_name={} as it does not exist in existing_alerts", folder_name)
+            return None, False
         for r in rules:
             rule_title = r["grafana_alert"]["title"]
             if all_alerts or rule_title == alert_name:
