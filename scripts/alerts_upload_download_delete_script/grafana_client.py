@@ -1,5 +1,6 @@
 import json
 import sys
+import os
 from typing import List, Optional
 from typing import Tuple
 
@@ -38,6 +39,7 @@ class GrafanaClient:
         auth = HTTPBasicAuth(self._username, self._password)
         success = True
         response = request_fn(full_url, auth=auth, data=request_body, headers=self._headers, timeout=30)
+        # log.error("http {0} returned status {1}".format(response.status_code, response.content))
         if response.status_code >= 300:
             log.error("http {0} returned an error for url {1}; status = {2}, content={3}".format(
                 request_type,
@@ -46,6 +48,7 @@ class GrafanaClient:
                 response.content)
             )
             success = False
+        log.info("http {0} to url {1}".format(request_type, full_url))
         return response, success
 
     def _http_get_request_to_grafana(self, path: str) -> Tuple:
@@ -128,8 +131,33 @@ class GrafanaClient:
             return False
 
         log.debug("Folder UID={0}, Name={1}".format(folder_uid, folder))
+
+        
+        alert_data_json = json.loads(alert_data_json)
+        group_name = alert_data_json["name"]
+        rule_group_response, success = self._http_get_request_to_grafana(path=f"/api/ruler/grafana/api/v1/rules/{folder_uid}/{group_name}")
+        # log.error  ("Rule group response={0}".format(rule_group_response))
+        if not success:
+            raise Exception(f"Failed to get rule group: {group_name}")
+        
+        # If rule group response rules list is not empty process rule group
+        if rule_group_response["rules"]:
+            # Create a map of alert names to their corresponding rules from alert_data_json
+            alert_map = {alert["grafana_alert"]["title"]: alert for alert in alert_data_json["rules"]}
+
+            # For each alert in the existing rule group, check if it exists in alert_data_json and overwrite the rule in rule_group_response
+            for i, existing_alert in enumerate(rule_group_response["rules"]):
+                alert_name = existing_alert["grafana_alert"]["title"]
+                if alert_name in alert_map:
+                    rule_group_response["rules"][i] = alert_map[alert_name]
+        else:
+            # If the rule group response is empty, add all alerts from alert_data_json
+            rule_group_response["rules"] = alert_data_json["rules"]
+
+
         path = f"/api/ruler/grafana/api/v1/rules/{folder_uid}"
-        return self._http_post_request_to_grafana(path=path, post_data=alert_data_json)
+
+        return self._http_post_request_to_grafana(path=path, post_data=json.dumps(rule_group_response))
 
     def _list_alerts(self, folder_name: str) -> tuple[Optional[List], Optional[str]]:
         """List all alerts in a Grafana folder.
@@ -228,3 +256,92 @@ class GrafanaClient:
 
         existing_alerts[0][folder_name][0]["rules"] = new_rules
         return existing_alerts[0][folder_name][0], True
+    
+    def download_alerts_folder(self, folder_name):
+        log.debug("Download all alerts from folder={0}".format(
+            folder_name,
+        ))
+        folder_uid = self._get_alert_folder_uid(folder_name)
+        if folder_uid is None:
+            log.error("Folder not found: {0}".format(folder_name))
+            return None, False
+        existing_alerts, error = self._list_alerts(folder_name)
+        if error:
+            log.error(error)
+            return None, False
+        
+        return existing_alerts, True
+    
+    def upload_dashboard(self, dashboard_data, folder_name):
+        """Uploads a single dashboard to the specified Grafana folder."""
+        created, folder_id = self._create_alert_folder_if_not_exists(folder_name)
+        if not created:
+            log.error("Failed to create folder={0}".format(folder_name))
+            return False
+        # folder_id = self._get_alert_folder_uid(folder_name)
+        if folder_id is None:
+            log.error("Invalid folder name. Aborting upload.")
+            return
+        
+        # with open(dashboard_path, "r") as file:
+        #     dashboard_data = json.load(file)
+        
+        # Ensure the dashboard structure
+        dashboard_data["id"] = "null"
+        payload = {
+            "dashboard": dashboard_data,
+            "folderUid": folder_id,
+            "overwrite": True
+        }
+        
+        status = self._http_post_request_to_grafana(f"/api/dashboards/db", post_data=json.dumps(payload))
+        # response = requests.post(f"{GRAFANA_URL}/api/dashboards/db", headers=HEADERS, json=payload)
+        
+        if status:
+            title = dashboard_data.get("title", "Untitled")
+            log.info(f"Successfully uploaded '{title}'. to folder '{folder_name}'.")
+        else:
+            log.error(f"Failed to upload dashboard")
+
+    def __get_dashboard_uid_by_name(self, dashboard_name):
+        """Fetches the UID of a dashboard given its name."""
+        response, status = self._http_get_request_to_grafana(path="/api/search")
+        try:
+            
+            dashboards = response
+            for dashboard in dashboards:
+                if dashboard["title"] == dashboard_name:
+                    return dashboard["uid"]
+        except requests.exceptions.RequestException as e:
+            log.error(f"Error fetching dashboards: {e}")
+        except json.JSONDecodeError:
+            log.error("Error: Received unexpected response format (not JSON). Check authentication and API URL.")
+        return None
+    
+    def get_dashboard_uids_by_folder(self, folder_name):
+        """Fetches the UIDs of all dashboards in a given folder."""
+        folder_id = self._get_alert_folder_uid(folder_name)
+        response, status = self._http_get_request_to_grafana(path=f"/api/search?folderUIDs={folder_id}")
+        if status:
+            return [dashboard["uid"] for dashboard in response]
+        else:
+            log.error(f"Error fetching dashboards in folder {folder_id}")
+            return []
+
+
+    def download_dashboard(self, dashboard_identifier, is_uid=False):
+        """Downloads a single dashboard by UID or name."""
+        # if by_name:
+        if not is_uid:
+            dashboard_uid = self.__get_dashboard_uid_by_name(dashboard_identifier)
+        else:
+            dashboard_uid = dashboard_identifier
+        log.error("Dashboard UID={0} name {1}".format(dashboard_uid, dashboard_identifier))
+        
+        response_json, status = self._http_get_request_to_grafana(path=(f"/api/dashboards/uid/{dashboard_uid}"))
+        log.error("Status {0} Response {1}".format(status, response_json))
+        if status:
+            return response_json, True
+        else:   
+            log.error("Failed to fetch dashboard data from Grafana")
+            return None, False
