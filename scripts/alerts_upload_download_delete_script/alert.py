@@ -39,7 +39,7 @@ def parse_args():
 
         # Upload alerts from all folders (only one level down) within a root directory:
         # NOTE: Only for this specific command, the -f flag value is required BUT it does not have any use. It is just a placeholder and will not affect the upload.
-        python alert.py upload -r /path/to/root_directory \
+        python alert.py upload -m /path/to/root_directory \
             -a http://<your-kloudfuse-instance>.kloudfuse.io/grafana \
             -u admin \
             -p password \
@@ -56,7 +56,7 @@ def parse_args():
             -p password
 
         # Download all alerts from a folder named "My Alert Folder" in Grafana/Alerts tab to alerts_file_name.json:
-        python alert.py download -d -o /path/to/alerts/download/directory/alerts_file_name.json \
+        python alert.py download -d -o /path/to/alerts/download/directory/ \
             -f "My Alert Folder" \
             -a http://<your-kloudfuse-instance>.kloudfuse.io/grafana \
             -u admin \
@@ -64,7 +64,7 @@ def parse_args():
 
         # Download alerts from all Grafana folders:
         # NOTE: Only for this specific command, the -f flag value is required BUT it does not have any use. It is just a placeholder and will not affect the download.
-        python alert.py download -A -o /path/to/alerts/download/directory \
+        python alert.py download -m -o /path/to/alerts/download/directory \
             -a http://<your-kloudfuse-instance>.kloudfuse.io/grafana \
             -u admin \
             -p password \
@@ -151,9 +151,9 @@ def parse_args():
         help='Upload all JSON files from directory'
     )
     upload_mode.add_argument(
-        '-r',
-        '--root-directory',
-        help='Root directory containing subdirectories with alerts'
+        '-m',
+        '--multi-directory',
+        help='Directory containing multiple subdirectories with alerts'
     )
 
     # Download command (similar structure)
@@ -185,8 +185,8 @@ def parse_args():
         help='Download all alerts to directory'
     )
     download_mode.add_argument(
-        '-A',
-        '--all-folders',
+        '-m',
+        '--multi-directory',
         action='store_true',
         help='Download alerts from all Grafana folders'
     )
@@ -268,13 +268,13 @@ class UploadAlert(AlertManager):
             alert_folder_name=alert_folder_name
         )
 
-    def process_args(self, single_file, directory, root_directory):
+    def process_args(self, single_file, directory, multi_directory):
         if single_file:
             self._create_alert_from_one_file(single_file)
         elif directory:
             self._create_alert_from_dir(directory)
-        elif root_directory:
-            self._create_alerts_from_root_dir(root_directory)
+        elif multi_directory:
+            self._create_alerts_from_multi_dir(multi_directory)
         else:
             log.error("Invalid arguments provided.")
             exit(1)
@@ -313,13 +313,14 @@ class UploadAlert(AlertManager):
         if not os.path.isdir(directory):
             log.error("Directory not found: {}", directory)
             return
-        alert_payload = {
-            "interval": None,
-            "name": None,
-            "rules": []
-        }
+        
         for root, _, files in os.walk(directory):
             for file in files:
+                alert_payload = {
+                    "interval": None,
+                    "name": None,
+                    "rules": []
+                }
                 if not file.endswith(".json"):
                     log.warning("Skipping non-JSON file: {}", file)
                     continue
@@ -340,12 +341,12 @@ class UploadAlert(AlertManager):
                 rules = cleaned_file_content.get("rules")
                 for rule in rules:
                     alert_payload["rules"].append(rule)
-        if subdir != None:
-            self.gc.create_alert(subdir, json.dumps(alert_payload)) 
-        else:
-            self.gc.create_alert(self.alert_folder_name, json.dumps(alert_payload))
+                if subdir != None:
+                    self.gc.create_alert(subdir, json.dumps(alert_payload)) 
+                else:
+                    self.gc.create_alert(self.alert_folder_name, json.dumps(alert_payload))
     
-    def _create_alerts_from_root_dir(self, root_directory: str):
+    def _create_alerts_from_multi_dir(self, root_directory: str):
         subdirectories = [d for d in os.listdir(root_directory) if os.path.isdir(os.path.join(root_directory, d))]
         for subdir in subdirectories:
             log.debug("Pre-Processing directory: {} {}", root_directory, subdir)
@@ -374,7 +375,7 @@ class DownloadAlert(AlertManager):
             log.error("Failed to create file {}: {}", file_path, str(e))
             return False
 
-    def process_args(self, alert_name, directory, output, all_folders):
+    def process_args(self, alert_name, directory, output, multi_directory):
         valid = self._validate_file(output)
         if not valid:
             log.error("Invalid output file path: {}", output)
@@ -384,7 +385,7 @@ class DownloadAlert(AlertManager):
             self._download_single_alert(alert_name, output)
         elif directory:
             self._download_alerts_from_folder(self.alert_folder_name, output)
-        elif all_folders:
+        elif multi_directory:
             self._download_alerts_from_all_folders(output)
         else:
             log.error("No valid download option provided.")
@@ -402,15 +403,21 @@ class DownloadAlert(AlertManager):
 
     def _download_alerts_from_folder(self, folder_name, output):
         log.debug("Downloading alerts from folder: {}", folder_name)
-        alert_payload, found = self.gc.download_alert(
+        alert_payload, found = self.gc.download_alerts_folder(
             folder_name,
-            None,
-            all_alerts=True,
         )
         if not found:
             log.error("Error downloading alerts from folder: {}", folder_name)
             exit(1)
-        self._save_alert_to_file(alert_payload, output)
+        # payload for folder comes in the format ({'folder_name': [alert_rule_group]}) - So we need to first extract just the folder name list and then iterate over it
+        try:
+            for alert_rule_group in alert_payload[0][folder_name]:
+                alert_group_name = alert_rule_group.get("name")
+                output_path = os.path.join(output, f"{alert_group_name}.json")
+                os.makedirs(output, exist_ok=True)
+                self._save_alert_to_file(alert_rule_group, output_path)
+        except Exception as e: 
+            log.debug("Error downloading alerts from folder: {} Error {}", folder_name, e)
 
     def _download_alerts_from_all_folders(self, output_dir):
         find_folder_api = "/api/folders"
@@ -419,9 +426,9 @@ class DownloadAlert(AlertManager):
         if os.path.exists(output_dir) and os.path.isfile(output_dir):
             # Remove the file
             os.remove(output_dir)
-            print(f"File {output_dir} has been removed.")
+            log.debug(f"File {output_dir} has been removed.")
         else:
-            print(f"File {output_dir} does not exist.")
+            log.debug(f"File {output_dir} does not exist.")
         # Ensure output_dir is a directory
         if not os.path.exists(output_dir):
             log.debug("Creating directory: {}", output_dir)
@@ -433,16 +440,7 @@ class DownloadAlert(AlertManager):
             folder_name = folder['title']
             folder_output_path = os.path.join(output_dir, folder_name)
             log.debug("Downloading alerts from folder: {}", folder_name)
-            alert_payload, found = self.gc.download_alert(
-                folder_name,
-                None,
-                all_alerts=True,
-            )
-            if not found:
-                log.debug("Error downloading alerts from folder: {}", folder_name)
-                continue
-            os.makedirs(folder_output_path, exist_ok=True)
-            self._save_alert_to_file(alert_payload, os.path.join(folder_output_path, 'alerts.json'))
+            self._download_alerts_from_folder(folder_name, folder_output_path)
 
     def _save_alert_to_file(self, alert_payload, output_path):
         with open(output_path, 'w') as f:
@@ -499,7 +497,7 @@ if __name__ == "__main__":
         i.process_args(
             single_file=args.single_file,
             directory=args.directory,
-            root_directory=args.root_directory,
+            multi_directory=args.multi_directory,
         )
     elif args.command == "download":
         e = DownloadAlert(
@@ -510,7 +508,7 @@ if __name__ == "__main__":
             alert_name=args.alert_name,
             directory=args.directory,
             output=args.output,
-            all_folders=args.all_folders,
+            multi_directory=args.multi_directory,
         )
     elif args.command == "delete":
         d = DeleteAlert(
