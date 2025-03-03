@@ -8,7 +8,7 @@ from typing import Optional, Union, Tuple
 
 from loguru import logger as log
 
-from grafana_client import GrafanaClient
+from common.grafana_client import GrafanaClient
 
 
 def parse_args():
@@ -223,7 +223,7 @@ def parse_args():
 
 
 class AlertManager(object):
-    from grafana_client import GrafanaClient
+    from common.grafana_client import GrafanaClient
 
     def __init__(
             self,

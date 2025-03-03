@@ -8,7 +8,7 @@ from typing import Optional, Union, Tuple
 
 from loguru import logger as log
 
-from grafana_client import GrafanaClient
+from common.grafana_client import GrafanaClient
 
 def parse_args():
     """Grafana Dashboard Management Tool
@@ -212,7 +212,7 @@ def parse_args():
     return parser.parse_args()
 
 class DashboardManager(object):
-    from grafana_client import GrafanaClient
+    from scripts.assets.common.grafana_client import GrafanaClient
 
     def __init__(
             self,
