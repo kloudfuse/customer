@@ -4,8 +4,9 @@ These Python scripts are provided for managing alerts and dashboards in Grafana.
 
 ## Prerequisites
 - Python 3.x
-- Required Python packages: `requests`, `loguru`, `argparse`
+- Required Python packages: `requests`, `loguru`, `argparse` (use the requirements.txt file to install all the pakcages `pip3 install -r requirements.txt`)
 - Access to a Grafana instance with API authentication
+
 
 ## Common Arguments
 These arguments apply to both alert and dashboard scripts:
