@@ -15,7 +15,7 @@ log.add(sink=sys.stderr, level="INFO")
 
 
 class GrafanaClient:
-    def __init__(self, grafana_server, grafana_username, grafana_password):
+    def __init__(self, grafana_server, grafana_username, grafana_password, verify_ssl=True):
         parsed_url = urlparse(grafana_server)
         self._scheme = parsed_url.scheme or "https"  # Default to HTTPS if no scheme provided
         self._server = parsed_url.netloc 
@@ -27,6 +27,7 @@ class GrafanaClient:
             "Content-Type": "application/json",
             "Accept": "application/json"
         }
+        self.verify = verify_ssl
 
     def _handle_http_request_to_grafana(self, **kwargs) -> Tuple:
         path = kwargs.get("path", "")
@@ -38,7 +39,7 @@ class GrafanaClient:
         full_url = f"{self._scheme}://{self._server}{path}"
         auth = HTTPBasicAuth(self._username, self._password)
         success = True
-        response = request_fn(full_url, auth=auth, data=request_body, headers=self._headers, timeout=30)
+        response = request_fn(full_url, auth=auth, data=request_body, headers=self._headers, timeout=30, verify=self.verify)
         # log.error("http {0} returned status {1}".format(response.status_code, response.content))
         if response.status_code >= 300:
             log.error("http {0} returned an error for url {1}; status = {2}, content={3}".format(

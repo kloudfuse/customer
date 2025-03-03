@@ -107,6 +107,12 @@ def parse_args():
         default="password",
         help="Grafana password"
     )
+    parent_parser.add_argument(
+        "-v",
+        "--verify-ssl",
+        action='store_false',
+        help="Verify SSL certificate (default: True)"
+    )
 
     # Main parser
     parser = argparse.ArgumentParser(
@@ -373,6 +379,7 @@ if __name__ == "__main__":
         grafana_server=args.grafana_address,
         grafana_username=args.grafana_username,
         grafana_password=args.grafana_password,
+        verify_ssl=args.verify_ssl
     )
 
     dashboard_folder_name = args.dashboard_folder_name
