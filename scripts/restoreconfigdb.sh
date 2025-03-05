@@ -3,12 +3,13 @@ set -x
 
 S3_PATH=$1
 
+
 if [ -z "$S3_PATH" ] ; then
   echo "Usage: ./restoreconfigdb.sh s3path"
   exit 1
 fi
 
-DBS=("alertsdb" "beffedb" "hydrationdb" "logsconfigdb" "rbacdb" "apmconfigdb")
+DBS=("alertsdb" "beffedb" "hydrationdb" "logsconfigdb" "rbacdb" "apmconfigdb" "slodb" "logs_metadata" "samldb" )
 
 get_replica_count(){
   local deployment=$1
@@ -37,7 +38,7 @@ scale_deployment() {
   kubectl scale deployment $deployment --replicas=$replicas >/dev/null 2>&1
 }
 
-SERVICES=("user-mgmt-service" "kfuse-grafana" "trace-query-service")
+SERVICES=("user-mgmt-service" "kfuse-grafana" "advance-functions-service" "analytics-service" "beffe" "catalog-service" "events-query-service" "trace-transformer" "metrics-transformer" "logs-transformer")
 
 echo "Storing original replica counts in ReplicaSet annotations..."
 for service in "${SERVICES[@]}"; do
@@ -57,16 +58,14 @@ for DB in "${DBS[@]}"; do
 done
 
 echo "Restoring databases..."
-for DB in "${DBS[@]}"; do
-  echo "Restoring $DB..."
-  aws s3 cp "$S3_PATH/$DB.sql.gz" - | gzip -d | \
-    kubectl exec -i kfuse-configdb-0 -- bash -c "PGPASSWORD=password psql -U postgres -d $DB -q" 2>&1 | grep -v "already exists" || true
-done
+# aws s3 cp "$S3_PATH" - | gzip -d |  kubectl exec -it kfuse-configdb-0 --  bash -c "PGPASSWORD=password psql -q -U postgres"
 
-echo "Scaling up services to original replica counts from ReplicaSet annotations..."
-for service in "${SERVICES[@]}"; do
-  replicas=$(get_replica_count $service | awk '{print $2}')
-  scale_deployment $service $replicas
-done
+# echo "Scaling up services to original replica counts from ReplicaSet annotations..."
+# for service in "${SERVICES[@]}"; do
+#   replicas=$(get_replica_count $service | awk '{print $2}')
+#   scale_deployment $service $replicas
+# done
 
-echo "Restore process completed!"
+# echo "Restore process completed!"
+
+# aws s3 cp "$S3_PATH" - | gzip -d |  kubectl exec -it kfuse-configdb-0 --  bash -c "PGPASSWORD=password psql -q -U postgres"
