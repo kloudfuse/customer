@@ -1,0 +1,1 @@
+{{ template "slack.default.title" . }}

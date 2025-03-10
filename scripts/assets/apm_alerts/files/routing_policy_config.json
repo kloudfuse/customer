@@ -1,0 +1,31 @@
+{
+    "alertmanager_config": {
+        "receivers": {{ receivers }},
+        "route": {
+            "group_by": [],
+            "receiver": "cloudwatch_alerts",
+            "routes": [
+            {% for policy in routing_policies %}
+                {
+                    "continue": {{ policy.continue }},
+                    "mute_time_intervals": [],
+                    "object_matchers": [
+                        {% for matcher in policy.matchers %}
+                        [
+                            "{{ matcher.key }}",
+                            "{{ matcher.op }}",
+                            "{{ matcher.value }}"
+                        ]{{ "," if not loop.last else "" }}
+                        {% endfor %}
+                    ],
+                    "receiver": "{{ policy.channel }}",
+                    "routes": {{ policy.nested_routes }}
+                }{{ "," if not loop.last else "" }}
+            {% endfor %}
+            ]
+        },
+        "templates": null
+    },
+    "template_file_provenances": {},
+    "template_files": {}
+}

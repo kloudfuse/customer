@@ -1,0 +1,5 @@
+contact_point_name,type,receiver,template_title_file,template_body_file
+alerts-webui,slack,https://hooks.slack.com/services/xxxx/yyyy/zzzz,default_slack_template_title,default_slack_template_body
+incore,email,sample_email@email.com,default_email_template_title,default_email_template_body
+support,slack,https://hooks.slack.com/services/xxxx/yyyy/zzzz,default_slack_template_title,default_slack_template_body
+vinayk_test,email,test@domain.com,default_email_template_title,default_email_template_body

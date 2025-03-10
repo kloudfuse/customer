@@ -1,0 +1,271 @@
+{
+    "name":"{{ name }}",
+    "folder":"{{ folder }}",
+    "interval":"{{ interval }}",
+    "rules":[
+        {% for rule in rules %}
+        {% if 'anomaly' not in rule.annotations %}
+        {
+            "for":"{{ rule.for_duration }}",
+            "annotations":{{ rule.annotations }},
+            "labels":{{ rule.labels }},
+            "grafana_alert":{
+                "title":"{{ rule.title }}",
+                "condition":"C",
+                "no_data_state":"OK",
+                "exec_err_state":"KeepLast",
+                "data":[
+                    {
+                        "refId":"A",
+                        "queryType":"",
+                        "datasourceUid":"{{ rule.datasourceUid }}",
+                        "relativeTimeRange":{
+                            "from":300,
+                            "to":0
+                        },
+                        "model":{
+                            "refId":"A",
+                            "hide":false,
+                            "datasource": {
+                                "type": "prometheus"
+                            },
+                            "expr":{{ rule.expr }},
+                            "interval":"{{ rule.interval }}",
+                            "intervalMs":{{ rule.intervalMs }}
+                        }
+                    },
+                    {
+                        "datasourceUid":"-100",
+                        "model":{
+                            "refId":"B",
+                            "type":"reduce",
+                            "datasource":{
+                                "type":"__expr__",
+                                "uid":"__expr__",
+                                "name":"Expression"
+                            },
+                            "conditions":[
+                                {
+                                    "type":"query",
+                                    "reducer":{
+                                        "params":[],
+                                        "type":"last()"
+                                    },
+                                    "operator":{
+                                        "type":"and"
+                                    },
+                                    "query":{
+                                        "params":[]
+                                    },
+                                    "evaluator":{
+                                        "params":["0"],
+                                        "type":"gt"
+                                    }
+                                }
+                            ],
+                            "hide":false,
+                            "reducer":"{{ rule.reducer_type }}",
+                            "expression":"A",
+                            "settings": {
+                                "mode": "dropNN"
+                            }
+                        },
+                        "refId":"B",
+                        "queryType":""
+                    },
+                    {
+                        "datasourceUid":"-100",
+                        "model":{
+                            "refId":"C",
+                            "type":"math",
+                            "datasource":{
+                                "type":"__expr__",
+                                "uid":"__expr__",
+                                "name":"Expression"
+                            },
+                            "conditions":[
+                                {
+                                    "type":"query",
+                                    "reducer":{
+                                        "params":[],
+                                        "type":"last()"
+                                    },
+                                    "operator":{
+                                        "type":"and"
+                                    },
+                                    "query":{
+                                        "params":[]
+                                    },
+                                    "evaluator":{
+                                        "params":[
+                                            "{{ rule.params }}"
+                                        ],
+                                        "type":"{{ rule.conditions_type }}"
+                                    }
+                                }
+                            ],
+                            "hide":false,
+                            "expression":"{{ rule.expression }}"
+                        },
+                        "refId":"C",
+                        "queryType":""
+                    }
+                ]
+            }
+        }{{ "," if not loop.last else "" }}
+        {% else %}
+        {
+            "for":"{{ rule.for_duration }}",
+            "annotations":{{ rule.annotations }},
+            "labels":{{ rule.labels }},
+            "grafana_alert":{
+                "title":"{{ rule.title }}",
+                "condition":"D",
+                "no_data_state":"OK",
+                "exec_err_state":"KeepLast",
+                "data":[
+                    {
+                        "refId":"A",
+                        "queryType":"",
+                        "datasourceUid":"{{ rule.datasourceUid }}",
+                        "relativeTimeRange":{
+                            "from":300,
+                            "to":0
+                        },
+                        "model":{
+                            "refId":"A",
+                            "hide":false,
+                            "datasource": {
+                                "type": "prometheus"
+                            },
+                            "expr":{{ rule.expr }},
+                            "interval":"{{ rule.interval }}",
+                            "intervalMs":{{ rule.intervalMs }}
+                        }
+                    },
+                    {
+                        "datasourceUid":"-100",
+                        "model":{
+                            "refId":"B",
+                            "type":"reduce",
+                            "datasource":{
+                                "type":"__expr__",
+                                "uid":"__expr__",
+                                "name":"Expression"
+                            },
+                            "conditions":[
+                                {
+                                    "type":"query",
+                                    "reducer":{
+                                        "params":[],
+                                        "type":"last"
+                                    },
+                                    "operator":{
+                                        "type":"and"
+                                    },
+                                    "query":{
+                                        "params":[]
+                                    },
+                                    "evaluator":{
+                                        "params":[
+                                            "0"
+                                        ],
+                                        "type":"gt"
+                                    }
+                                }
+                            ],
+                            "hide":false,
+                            "reducer":"sum",
+                            "expression":"A",
+                            "settings": {
+                                "mode": "dropNN"
+                            }
+                        },
+                        "refId":"B",
+                        "queryType":""
+                    },
+                    {
+                        "datasourceUid":"-100",
+                        "model":{
+                            "refId":"C",
+                            "type":"reduce",
+                            "datasource":{
+                                "type":"__expr__",
+                                "uid":"__expr__",
+                                "name":"Expression"
+                            },
+                            "conditions":[
+                                {
+                                    "type":"query",
+                                    "reducer":{
+                                        "params":[],
+                                        "type":"last"
+                                    },
+                                    "operator":{
+                                        "type":"and"
+                                    },
+                                    "query":{
+                                        "params":[]
+                                    },
+                                    "evaluator":{
+                                        "params":[
+                                            "0"
+                                        ],
+                                        "type":"gt"
+                                    }
+                                }
+                            ],
+                            "hide":false,
+                            "reducer":"count",
+                            "expression":"A",
+                            "settings": {
+                                "mode": "dropNN"
+                            }
+                        },
+                        "refId":"C",
+                        "queryType":""
+                    },
+                    {
+                        "datasourceUid":"-100",
+                        "model":{
+                            "refId":"D",
+                            "type":"math",
+                            "datasource":{
+                                "type":"__expr__",
+                                "uid":"__expr__",
+                                "name":"Expression"
+                            },
+                            "conditions":[
+                                {
+                                    "type":"query",
+                                    "reducer":{
+                                        "params":[],
+                                        "type":"last()"
+                                    },
+                                    "operator":{
+                                        "type":"and"
+                                    },
+                                    "query":{
+                                        "params":[]
+                                    },
+                                    "evaluator":{
+                                        "params":[
+                                            "{{ rule.params }}"
+                                        ],
+                                        "type":"{{ rule.conditions_type }}"
+                                    }
+                                }
+                            ],
+                            "hide":false,
+                            "expression":"{{ rule.expression }}"
+                        },
+                        "refId":"D",
+                        "queryType":""
+                    }
+                ]
+            }
+        }{{ "," if not loop.last else "" }}
+        {% endif %}
+        {% endfor %}
+    ]
+}
