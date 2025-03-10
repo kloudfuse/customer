@@ -1,0 +1,26 @@
+{
+  "name": "{{ name }}",
+  "grafana_managed_receiver_configs": [
+    {
+      "name": "{{ name }}",
+      "type": "{{ type }}",
+      "disableResolveMessage": false,
+{% if type == 'slack' %}
+      "settings": {
+        "title": {{ template_title }},
+        "text": {{ template_body }}
+      },
+      "secureSettings": {
+        "url": "{{ receiver }}"
+      }
+{% elif type == 'email' %}
+      "settings": {
+        "subject": {{ template_title }},
+        "message": {{ template_body }},
+        "addresses": "{{ receiver }}"
+      },
+      "secureFields": {}
+{% endif %}
+    }
+  ]
+}
