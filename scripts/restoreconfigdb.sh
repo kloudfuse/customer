@@ -2,6 +2,7 @@
 set -x
 
 S3_PATH=$1
+PGPW=`kubectl get secret kfuse-pg-credentials -o jsonpath="{.data.postgresql-password}" | base64 --decode ; echo`
 
 if [ -z "$S3_PATH" ] ; then
   echo "Usage: ./restoreconfigdb.sh s3path"
@@ -52,15 +53,15 @@ sleep 30  # Wait for services to scale down
 
 echo "Dropping and recreating databases..."
 for DB in "${DBS[@]}"; do
-  kubectl exec -i kfuse-configdb-0 -- bash -c "PGPASSWORD=password psql -U postgres -q -c \"\pset format unaligned; DROP DATABASE IF EXISTS $DB;\"" >/dev/null 2>&1
-  kubectl exec -i kfuse-configdb-0 -- bash -c "PGPASSWORD=password psql -U postgres -q -c \"\pset format unaligned; CREATE DATABASE $DB;\"" >/dev/null 2>&1
+  kubectl exec -i kfuse-configdb-0 -- bash -c "PGPASSWORD=$PGPW psql -U postgres -q -c \"\pset format unaligned; DROP DATABASE IF EXISTS $DB;\"" >/dev/null 2>&1
+  kubectl exec -i kfuse-configdb-0 -- bash -c "PGPASSWORD=$PGPW  psql -U postgres -q -c \"\pset format unaligned; CREATE DATABASE $DB;\"" >/dev/null 2>&1
 done
 
 echo "Restoring databases..."
 for DB in "${DBS[@]}"; do
   echo "Restoring $DB..."
   aws s3 cp "$S3_PATH/$DB.sql.gz" - | gzip -d | \
-    kubectl exec -i kfuse-configdb-0 -- bash -c "PGPASSWORD=password psql -U postgres -d $DB -q" 2>&1 | grep -v "already exists" || true
+    kubectl exec -i kfuse-configdb-0 -- bash -c "PGPASSWORD=$PGPW psql -U postgres -d $DB -q" 2>&1 | grep -v "already exists" || true
 done
 
 echo "Scaling up services to original replica counts from ReplicaSet annotations..."
