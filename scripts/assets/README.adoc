@@ -1,163 +1,238 @@
-# Grafana Alert and Dashboard Management Scripts
+= Grafana Alert and Dashboard Management Scripts
 
 Kloudfuse provides Python scripts to manage alerts and dashboards in Grafana, to enable you to upload, download, and delete alerts and dashboards in specified folders within Grafana.
 
-This document is your guide for efficiently managing Grafana alerts and dashboards using the `alert.py` and `dashboard.py` scripts.
+This document is your guide to efficiently manage Grafana alerts and dashboards using the `alert.py` and `dashboard.py` scripts.
 
-## Prerequisites
-- Python 3.x
-- Required Python packages: `requests`, `loguru`, `argparse` (use the requirements.txt file to install all the pakcages `pip3 install -r requirements.txt`)
-- Access to a Grafana instance with API authentication
+[[prerequisites]]
+== Prerequisites
 
+* Python 3.x
+* Required Python packages: `requests`, `loguru`, `argparse` (use the requirements.txt file to install all the pakcages `pip3 install -r requirements.txt`)
+* Access to a Grafana instance with API authentication
 
-## Common Arguments
+[[arguments]]
+== Common Arguments
+
 These arguments apply to both alert and dashboard scripts:
 
-- `-f, --folder-name` : Grafana folder name
-- `-a, --grafana-address` : Grafana server URL
-- `-u, --grafana-username` : Grafana username (default: `admin`)
-- `-p, --grafana-password` : Grafana password (default: `password`)
-- `-v, --verify-ssl` : Disable SSL verification (default: enabled). Use this flag to skip SSL verification when connecting to Grafana.
+[[f]]
+`-f, --folder-name`:: Grafana folder name
 
----
+[[a]]
+`-a, --grafana-address`:: Grafana server URL
 
-# Manage Alerts
+ [[u]]
+`-u, --grafana-username`:: Grafana username (default: `admin`)
+
+[[p]]
+`-p, --grafana-password`:: Grafana password (default: `password`)
+
+[[v]]
+`-v, --verify-ssl`:: Disable SSL verification (default: enabled). Use this flag to skip SSL verification when connecting to Grafana.
+
+[[notes]]
+=== Notes
+
+* Replace `<grafana-instance>` with the actual Grafana server URL.
+* Ensure that the API credentials have the necessary permissions to manage alerts and dashboards.
+* The `-f` flag is required. It is a placeholder in some multi-directory operations.
+
+[[alerts]]
+== Manage Alerts
 Use the `alert.py` script to manage Grafana alerts: upload, download, and delete alerts.
 
-### Upload Alerts
+[[alerts-upload]]
+=== Upload Alerts
 Upload alerts to a specific Grafana folder.
 
-#### Upload a Single Alert
-```sh
+.Upload a Single Alert
+====
+[,code]
+----
+sh
 python alert.py upload -s /path/to/alert.json \
     -f "My Alert Folder" \
     -a http://<grafana-instance>/grafana \
     -u admin -p password
-```
+----
+====
 
-#### Upload Multiple Alerts from a Directory
-```sh
+.Upload Multiple Alerts from a Directory
+====
+[,code]
+----
+sh
 python alert.py upload -d /path/to/alerts/directory \
     -f "My Alert Folder" \
     -a http://<grafana-instance>/grafana \
     -u admin -p password
-```
+----
+====
 
-#### Upload Alerts from Multiple Directories
-```sh
+.Upload Alerts from Multiple Directories
+====
+[,code]
+----
+sh
 python alert.py upload -m /path/to/root_directory \
     -a http://<grafana-instance>/grafana \
     -u admin -p password \
     -f "placeholder"
-```
+----
+====
 
-### Download Alerts
+[[alerts-download]]
+=== Download Alerts
+
 Retrieve alerts from Grafana, and save them as JSON files.
 
-#### Download a Single Alert
-```sh
+.Download a Single Alert
+====
+[,code]
+----
+sh
 python alert.py download -s "Alert Name" -o /path/to/alert.json \
     -f "My Alert Folder" \
     -a http://<grafana-instance>/grafana \
     -u admin -p password
-```
+----
+====
 
-#### Download All Alerts from a Folder
-```sh
+.Download All Alerts from a Folder
+====
+[,code]
+----
+sh
 python alert.py download -d -o /path/to/alerts/download/ \
     -f "My Alert Folder" \
     -a http://<grafana-instance>/grafana \
     -u admin -p password
-```
+----
+====
 
-#### Download Alerts from All Folders
-```sh
+.Download Alerts from All Folders
+====
+[,code]
+----
+sh
 python alert.py download -m -o /path/to/alerts/download/ \
     -a http://<grafana-instance>/grafana \
     -u admin -p password \
     -f "placeholder"
-```
+----
+====
 
-### Delete Alerts
+[[alerts-delete]]
+=== Delete Alerts
+
 Remove alerts from Grafana.
 
-#### Delete a Single Alert
-```sh
+.Delete a Single Alert
+====
+[,code]
+----
+sh
 python alert.py delete -s "Alert Name" \
     -f "My Alert Folder" \
     -a http://<grafana-instance>/grafana \
     -u admin -p password
-```
+----
+====
 
-#### Delete All Alerts in a Folder
-```sh
+.Delete All Alerts in a Folder
+====
+[,code]
+----
+sh
 python alert.py delete -d -f "My Alert Folder" \
     -a http://<grafana-instance>/grafana \
     -u admin -p password
-```
+----
+====
 
----
-
-# Manage Dashboards
+[[dashboards]]
+== Manage Dashboards
 Use the `dashboard.py` script to manage Grafana dashboards: upload and download dashboards.
 
-### Upload Dashboards
+[[dashboards-upload]]
+=== Upload Dashboards
 Upload dashboards to a specified folder in Grafana.
 
-#### Upload a Single Dashboard
-```sh
+.Upload a Single Dashboard
+====
+[,code]
+----
+sh
 python dashboard.py upload -s /path/to/dashboard.json \
     -f "My Dashboard Folder" \
     -a http://<grafana-instance>/grafana \
     -u admin -p password
-```
+----
+====
 
-#### Upload All Dashboards from a Directory
-```sh
+.Upload All Dashboards from a Directory
+====
+[,code]
+----
+sh
 python dashboard.py upload -d /path/to/dashboards/directory \
     -f "My Dashboard Folder" \
     -a http://<grafana-instance>/grafana \
     -u admin -p password
-```
+----
+====
 
-#### Upload Dashboards from Multiple Directories
-```sh
+.Upload Dashboards from Multiple Directories
+====
+[,code]
+----
+sh
 python dashboard.py upload -m /path/to/dashboards_root_directory \
     -a http://<grafana-instance>/grafana \
     -u admin -p password \
     -f "all"
-```
+----
+====
 
-### Download Dashboards
+[[dashboards-download]]
+=== Download Dashboards
 Retrieve dashboards from Grafana, and save them as JSON files.
 
-#### Download a Single Dashboard
-```sh
+.Download a Single Dashboard
+====
+[,code]
+----
+sh
 python dashboard.py download -s "Dashboard Name" -o /path/to/dashboard.json \
     -f "My Dashboard Folder" \
     -a http://<grafana-instance>/grafana \
     -u admin -p password
-```
+----
+====
 
-#### Download All Dashboards from a Folder
-```sh
+.Download All Dashboards from a Folder
+====
+[,code]
+----
+sh
 python dashboard.py download -d -o /path/to/dashboards/download/ \
     -f "My Dashboard Folder" \
     -a http://<grafana-instance>/grafana \
     -u admin -p password
-```
+----
+====
 
-#### Download Dashboards from All Folders
-```sh
+.Download Dashboards from All Folders
+====
+[,code]
+----
+sh
 python dashboard.py download -m -o /path/to/dashboards/download/ \
     -a http://<grafana-instance>/grafana \
     -u admin -p password \
     -f "all"
-```
+----
+====
 
----
 
-## Notes
-- Replace `<grafana-instance>` with the actual Grafana server URL.
-- Ensure that the API credentials have the necessary permissions to manage alerts and dashboards.
-- The `-f` flag is required. It is a placeholder in some multi-directory operations.
