@@ -22,7 +22,7 @@ These arguments apply to both alert and dashboard scripts:
 [[a]]
 `-a, --grafana-address`:: Grafana server URL
 
- [[u]]
+[[u]]
 `-u, --grafana-username`:: Grafana username (default: `admin`)
 
 [[p]]
