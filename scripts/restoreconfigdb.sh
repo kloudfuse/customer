@@ -2,7 +2,12 @@
 set -x
 
 S3_PATH=$1
-PGPW=`kubectl get secret kfuse-pg-credentials -o jsonpath="{.data.postgresql-password}" | base64 --decode ; echo`
+PGPW=`kubectl -n kfuse get secret kfuse-pg-credentials -o jsonpath="{.data.postgresql-password}" | base64 --decode ; echo`
+
+if [ -z "$PGPW" ] ; then
+  echo "Secret not found in the kfuse namespace"
+  exit 1
+fi
 
 if [ -z "$S3_PATH" ] ; then
   echo "Usage: ./restoreconfigdb.sh s3path"
