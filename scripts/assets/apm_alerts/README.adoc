@@ -2,7 +2,7 @@
 
 Kloudfuse shares these Python scripts so you can create APM alerts and contact points using existing CSV files. Use these scripts to convert NRQL alerts to Grafana alerts. 
 
-[TIP]
+[NOTE]
 CSV files must use a fixed format. Ensure that you configure your source files correctly.  
 
 == Prerequisites
