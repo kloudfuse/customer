@@ -1,0 +1,3 @@
+= Customer
+
+This directory contains scripts for common operations and trouble shooting the Kloudfuse stack.
