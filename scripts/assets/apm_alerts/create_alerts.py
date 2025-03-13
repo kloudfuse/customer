@@ -149,6 +149,7 @@ class ExprGen:
                                                      service_dict)
                 service_hash = service_name_hash.split("_")[1]
                 expr = self.__get_alert_expr(row, alert_tmpls)
+                contact_points = row["contact_points"].split(";")
 
                 reducer = row["reducer"]
                 condition = "$B " + row["threshold_operator"] + " " + row["threshold_value"]
@@ -173,6 +174,8 @@ class ExprGen:
                 d.setdefault('service_hash', []).append(service_hash)
                 labels_dict = {item.split('=')[0]: item.split('=')[1] for item in service_id_labels}
                 d.setdefault('unique_labels', []).append(labels_dict)
+                contact_points_dict = {f"{item}" : "true" for item in contact_points}
+                d.setdefault('contact_points', []).append(contact_points_dict)
 
                 d['span_name'] = row["span_name_pattern"]
                 d.setdefault('service_name', []).append(service_name)
@@ -243,7 +246,8 @@ def calculate_service_hash(labels, values, service_idx):
             escaped_value = json.dumps(values[i])
             json_parts.append(",\"" + label + "\":" + escaped_value)
     
-    json_str = "".join(json_parts) + "}"
+    json_str = "{" + "".join(json_parts) + "}"
+
     hash_hex = h.hexdigest()
     return hash_hex.encode('utf-8'), json_str.encode('utf-8')
 
@@ -266,11 +270,13 @@ def generate_alert_rules(alert_rules_dict: Dict, **kwargs) -> Dict:
         apm_trigger_types = d.get("trigger_type")
         span_name = d.get("span_name", "")
         span_types = d.get("span_type", "")
+        contact_points = d.get("contact_points", [])
         for i, expr in enumerate(exprs):
             title = titles[i]
             extra_data = {}
             apm_trigger_type = apm_trigger_types[i]
             span_type = span_types[i]
+            contact_point = contact_points[i]
             extra_data["apmTriggerType"] = apm_trigger_type
             extra_data["serviceName"] = d.get("service_name")[i]
             extra_data["serviceHash"] = d.get("service_hash")[i]
@@ -287,9 +293,7 @@ def generate_alert_rules(alert_rules_dict: Dict, **kwargs) -> Dict:
                     "summary": title,
                     "Kloudfuse Source": "{{ reReplaceAll pathPrefix \"\" externalURL }}/#/alerts/details/{{ $labels.__alert_rule_uid__ }}?folderTitle={{ $labels.grafana_folder }}{{ range $key, $value := $labels }}&matcher={{ $key }}%3D{{ $value }}{{ end }}",
                 },
-                alert_rule_labels={
-                    "kfuse_generated": "true",
-                },
+                alert_rule_labels={"kfuse_generated": "true", **contact_point},
                 alert_rule_expression=expr,
                 alert_rule_for_duration="0s",
                 alert_rule_interval="1m",
@@ -298,6 +302,7 @@ def generate_alert_rules(alert_rules_dict: Dict, **kwargs) -> Dict:
                 alert_rule_condition_expression=conditions[i],
                 alert_rule_reducer_type=reducers[i]
             )
+
             alert_rules[group_name].append(alert_rule)
 
     return alert_rules
