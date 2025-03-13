@@ -11,7 +11,7 @@ CSV files must use a fixed format. Ensure that you configure your source files c
 - Required Python packages: use the `requirements.txt` file to install all the packages, using `pip3 install -r requirements.txt`.
 - Access to the Grafana instance 
 - CSV file for `create_alerts.py`: `sample_alerts_config.csv`
-- CSV file for c`reate_contact_points.py`: `sample_contact_points.csv`
+- CSV file for `create_contact_points.py`: `sample_contact_points.csv`
 - `SERVICE_ID_LABELS_AGGR` (["availability_zone", "cloud_account_id", "kf_platform", "kube_cluster_name", "kube_namespace", "project", "region", "service_name"]) : List of labels that must be customised for each customer
 
 == Command Arguments
@@ -33,6 +33,9 @@ Arguments Definitions:
 [[c]]
 `-c, --contact_points_file`:: CSV file with `config` for contact points; specify the absolute path
 
+[[v]]
+`-v, --verify-ssl`:: Disable SSL verification (default: enabled). Use this flag to skip SSL verification when connecting to Grafana.
+
 [[alerts]]
 == Create APM Alerts
 
@@ -40,7 +43,6 @@ Arguments Definitions:
 ====
 [,code]
 ----
-sh
 python3 create_alerts.py --grafana_server "https://<KFUSE_DNS_NAME>/grafana" \
   --threshold_values_file ./files/sample_alerts_config.csv \
   --grafana_username admin -p <your-password>
@@ -56,9 +58,8 @@ You cann convert NRQL alerts to Grafana alerts using the CSV file.
 ====
 [,code]
 ----
-sh
-apm_trigger,service_name,span_name_pattern,span_name_matcher_op,threshold_operator,threshold_value,reducer,service_id_labels
-http_requests,frontendproxy,ingress,=~,<,5,max,availability_zone=us-west1-a;cloud_account_id=12345
+apm_trigger,service_name,span_name_pattern,span_name_matcher_op,threshold_operator,threshold_value,reducer,service_id_labels,contact_points
+http_requests,frontendproxy,ingress,=~,<,5,max,"availability_zone=us-west1-a;cloud_account_id=mvp-demo-301906;kf_platform=kubernetes;kube_cluster_name=demo;kube_namespace=otel","grafana-default-email;support__kfuse_script_managed"
 ----
 ====
 
@@ -86,7 +87,14 @@ These are the field descriptions for `sample_alerts_config.csv`:
 See the *APM Services* page for each service to find this information. 
 +
 [[service_id_labels-example]]
-Example::: `availability_zone=us-west1-a;cloud_account_id=12345`
+Example::: `"availability_zone=us-west1-a;cloud_account_id=12345"`
+[[contact_points]]
+`contact_points`:: set multiple contact points for the alerts, separated by semicolon.
++
+See the *Contact Points* tab in the *Alerts* page for available contact points. Also, you can create contact points using the `create_contact_points.py` script. Additionally, add notification policies using the `create_notification_policies.py` script.
++
+[[contact_points-example]]
+Example::: `"grafana-default-email;support__kfuse_script_managed"`
 
 [[contact-points]]
 == Create Alert Contact Points
@@ -95,7 +103,6 @@ Example::: `availability_zone=us-west1-a;cloud_account_id=12345`
 ====
 [,code]
 ----
-sh
 python3 create_contact_points.py -g "https://<KFUSE_DNS_NAME>/grafana"
 -c ./files/sample_contact_points.csv
 ----
@@ -109,7 +116,6 @@ Use `sample_contact_points.csv` with `create_contact_points.py` to define contac
 ====
 [,code]
 ----
-sh
 contact_point_name,type,receiver,template_title_file,template_body_file
 alerts-webui,slack,https://hooks.slack.com/services/xxxx/yyyy/zzzz,default_slack_template_title,default_slack_template_body
 incore,email,sample_email@email.com,default_email_template_title,default_email_template_body
@@ -152,7 +158,6 @@ Ensure that you correctly map each NRQL Trigger type to one of the Kloudfuse tri
 ====
 [,json]
 ----
-sh
 {
   "entity_name": "ACI-PROD-LMS-LIVE",
   "type": "apm_app_metric",
@@ -197,7 +202,6 @@ You may have to use both the `operator` and `apm_trigger` to determine the APM t
 ====
 [,json]
 ----
-sh
 {
   "nrql_conditions": [
     {
@@ -262,7 +266,6 @@ Corresponds to the `average_latency` trigger type in Kloudfuse. Represents the a
 ====
 [,json]
 ----
-sh
  "nrql": {
         "query": "SELECT percentile(duration,99) as value FROM Transaction WHERE appName = 'ACAC-PROD-FACETS-LMS-LIVE' and name = 'WebTransaction/Expressjs/POST//users/sessionv2'",
         "since_value": "60"
