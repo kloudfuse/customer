@@ -111,6 +111,7 @@ class AlertData:
 class GrafanaClient:
     def __init__(self, **kwargs):
         self._server = kwargs.get("grafana_server", "")
+        self._verify = kwargs.get("verify_ssl", True)
         if self._server.startswith("https://"):
             self._server = self._server.removeprefix("https://")
             self._scheme = "https"
@@ -143,7 +144,7 @@ class GrafanaClient:
         auth = HTTPBasicAuth(self._username, self._password)
         success = True
         response = request_fn(full_url, auth=auth, data=request_body,
-                              headers=self._headers, timeout=30, verify=False)
+                              headers=self._headers, timeout=30, verify=self._verify)
         if int(response.status_code / 100) != 2:
             print("http {0} returned an error for url {1}; status = {2}, content={3}".format(
                 request_type,

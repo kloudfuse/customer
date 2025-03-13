@@ -421,7 +421,11 @@ if __name__ == "__main__":
         "-t", "--threshold_values_file", required=True,
         help="CSV file with config for alert rules (absolute path)"
     )
+    parser.add_argument(
+        "-v", "--no-verify-ssl", action='store_false',
+        help="Verify SSL certificate (default: True)"
+    )
     args = parser.parse_args()
     gc = GrafanaClient(grafana_server=args.grafana_server, grafana_username=args.grafana_username,
-                       grafana_password=args.grafana_passwd)
+                       grafana_password=args.grafana_passwd, verify_ssl=args.no_verify_ssl)
     create_alerts_for_services(gc, args.threshold_values_file)
