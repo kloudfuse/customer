@@ -1,0 +1,114 @@
+{
+    "clients": [
+        {
+            "client_name": "ci",
+            "environment": "develop",
+            "healthcheck_period": "EVERY_15_MINUTES",
+            "nr_account_id": "3712189",
+            "services": [
+                {
+                    "alerts": {
+                        "critical_error_rate": 1,
+                        "critical_response_time": {
+                            "percentile": 90,
+                            "milliseconds": 5000
+                        },
+                        "warning_response_time": {
+                            "percentile": 90,
+                            "milliseconds": 3000
+                        }
+                    },
+                    "apm_name": "ci-develop-arkham",
+                    "metadata": {
+                        "endpoint": "https://ci-develop.innovaccer.net/arkham/health"
+                    },
+                    "monitor_type": "SIMPLE",
+                    "notification_channels": [
+                        "alerts-webui"
+                    ],
+                    "service_name": "arkham",
+                    "transactions": [
+                        "test/span1",
+                        "test/span2"
+                    ]
+                },
+                {
+                    "alerts": {
+                        "critical_error_rate": 1,
+                        "critical_response_time": {
+                            "percentile": 90,
+                            "milliseconds": 5000
+                        },
+                        "warning_response_time": {
+                            "percentile": 90,
+                            "milliseconds": 3000
+                        }
+                    },
+                    "apm_name": "ci-develop-incore-usermanagement",
+                    "metadata": {
+                        "endpoint": "https://ci-develop.innovaccer.net/usermanagement/um/health"
+                    },
+                    "monitor_type": "SIMPLE",
+                    "notification_channels": [
+                        "alerts-webui",
+                        "vinayk_test"
+                    ],
+                    "service_name": "UserManagement",
+                    "transactions": [
+                        "test/span3"
+                    ]
+                },
+                {
+                    "alerts": {
+                        "critical_error_rate": 1,
+                        "critical_response_time": {
+                            "percentile": 90,
+                            "milliseconds": 5000
+                        },
+                        "warning_response_time": {
+                            "percentile": 90,
+                            "milliseconds": 3000
+                        }
+                    },
+                    "apm_name": "ci-develop-webui",
+                    "metadata": {
+                        "endpoint": "https://ci-develop.innovaccer.net"
+                    },
+                    "monitor_type": "SIMPLE",
+                    "notification_channels": [
+                        "alerts-webui"
+                    ],
+                    "service_name": "WebUI",
+                    "transactions": []
+                },
+                {
+                    "alerts": {
+                        "critical_error_rate": 1,
+                        "critical_response_time": {
+                            "percentile": 90,
+                            "milliseconds": 5000
+                        },
+                        "warning_response_time": {
+                            "percentile": 90,
+                            "milliseconds": 3000
+                        }
+                    },
+                    "apm_name": "ci-develop-configurations",
+                    "metadata": {
+                        "endpoint": "https://ci-develop.innovaccer.net/configurations/configurations/health"
+                    },
+                    "monitor_type": "SIMPLE",
+                    "notification_channels": [
+                        "alerts-webui",
+                        "incore",
+                        "support"
+                    ],
+                    "service_name": "configurationservice",
+                    "transactions": []
+                }
+            ],
+            "support_notification": true,
+            "user_management_base_url": "https://ci-develop.innovaccer.net/api/v2/applayer"
+        }
+    ]
+}

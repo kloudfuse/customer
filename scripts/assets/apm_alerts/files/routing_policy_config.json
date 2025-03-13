@@ -3,7 +3,7 @@
         "receivers": {{ receivers }},
         "route": {
             "group_by": [],
-            "receiver": "cloudwatch_alerts",
+            "receiver": "support__kfuse_script_managed",
             "routes": [
             {% for policy in routing_policies %}
                 {
