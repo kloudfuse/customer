@@ -136,9 +136,7 @@ class GrafanaClient:
         
         alert_data_json = json.loads(alert_data_json)
         group_name = alert_data_json["name"]
-        log.error("Group name={0}".format(alert_data_json))
         rule_group_response, success = self._http_get_request_to_grafana(path=f"/api/ruler/grafana/api/v1/rules/{folder_uid}/{group_name}")
-        log.error  ("Rule group response={0}".format(rule_group_response))
         if not success:
             raise Exception(f"Failed to get rule group: {group_name}")
         
