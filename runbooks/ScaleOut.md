@@ -1,18 +1,17 @@
-= Scale Out Kloudfuse =
+# Scale Out Kloudfuse
 
 To handle increased volume of data, kloudfuse stack can be scaled out by adding additional kubernetes nodes. This runbook describes how to add additional capacity for running kloudfuse stack through addition of new nodes.
 
-== When to scale out == 
+## When to scale out
 Sudden increase in the incoming volume of logs, metrics, traces, RUM, etc. will impact the kloudfuse stack in the following way:
-=== User Visible Impact ===
-    * Lagging of data as seen from the UI - older data is visible; more recent data is not visible
-    * Alert rule status seen as “No Data”
-    * UI showing various query failure error messages
-=== Internal Impact ===
-    * Increased CPU, memory and disk consumption used by the kloudfuse services and pods
-    * Crashing of various kloudfuse pods (ingester, kafka, etc.)
-    * Increased consumer lag in logs, metrics, APM kafka topics.
-
+### User Visible Impact
+* Lagging of data as seen from the UI - older data is visible; more recent data is not visible
+* Alert rule status seen as “No Data”
+* UI showing various query failure error messages
+### Internal Impact
+* Increased CPU, memory and disk consumption used by the kloudfuse services and pods
+* Crashing of various kloudfuse pods (ingester, kafka, etc.)
+* Increased consumer lag in logs, metrics, APM kafka topics.
 If the incoming volume increase is temporary, the user visible impact will be temporary and kloudfuse cluster will recover on its own.
 If the incoming volume increase is longer term (or permanent), kloudfuse cluster will need to be scaled.
 
@@ -34,10 +33,9 @@ To add additional nodes follow the steps below:
 9. It might take some time for kafka consumer lags for various topics to be reduced to its normal as the new capacity has to deal with data queued in kafka as well as new incoming data. The consumer lags for various topics should be monitored at the individual topic and partition level to ensure that all partitions are consuming properly.
 10. Checkin the customer value yaml file in the appropriate customer git repo.
 
-== Validation ==
+## Validation
 * Verify that the control plane alerts are no longer firing
 * Control plane overview status is all GREEN
 * Individual stream specific control plane dashboards are all GREEN
 * Kloudfuse UI does not show any lag and recent data is visible
 * Verify that alert rules configured by the customer on the kloudfuse cluster are in “Healthy” state.
-
