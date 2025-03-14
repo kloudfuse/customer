@@ -18,8 +18,8 @@ CSV files must use a fixed format. Ensure that you configure your source files c
 
 Arguments Definitions:
 
-[[a]]
-`-a, --grafana-server`:: Grafana server address, such as `https://<KFUSE_DNS_NAME>grafana`
+[[g]]
+`-g, --grafana-server`:: Grafana server address, such as `https://<KFUSE_DNS_NAME>grafana`
 
 [[u]]
 `-u, --grafana-username`:: Grafana username; default: `admin`
@@ -35,6 +35,9 @@ Arguments Definitions:
 
 [[v]]
 `-v, --verify-ssl`:: Disable SSL verification (default: enabled). Use this flag to skip SSL verification when connecting to Grafana.
+
+[[j]]
+`-j, --nr_config_json`:: JSON file with NR alert policy config (which contains both service name and notification channels).
 
 [[alerts]]
 == Create APM Alerts
