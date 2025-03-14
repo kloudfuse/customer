@@ -127,7 +127,7 @@ class ExprGen:
         # If a label is missing in matcher_dict, default to an empty string.
         values = [matcher_dict.get(label, "") for label in labels]
         service_idx = labels.index("service_name")
-        hash_bytes, json_bytes = calculate_service_hash(labels, values, service_idx)
+        hash_bytes = calculate_service_hash(labels, values, service_idx)
         
         return f"{service_name}_{hash_bytes.decode('utf-8')}"
 
@@ -230,8 +230,6 @@ def calculate_service_hash(labels, values, service_idx):
     service_value = values[service_idx]
     h.update(service_label.encode('utf-8'))
     h.update(service_value.encode('utf-8'))
-    json_parts = []
-    json_parts.append("\"service_name\":\"" + service_value + "\"")
     
     # Iterate over all other labels.
     for i, label in enumerate(labels):
@@ -240,16 +238,11 @@ def calculate_service_hash(labels, values, service_idx):
         h.update(label.encode('utf-8'))
         if values[i] == "" or values[i] == "UNKNOWN":
             h.update(b"")  # Writing empty bytes if the value is missing.
-            json_parts.append(",\"" + label + "\":\"\"")
         else:
             h.update(values[i].encode('utf-8'))
-            escaped_value = json.dumps(values[i])
-            json_parts.append(",\"" + label + "\":" + escaped_value)
-    
-    json_str = "{" + "".join(json_parts) + "}"
 
     hash_hex = h.hexdigest()
-    return hash_hex.encode('utf-8'), json_str.encode('utf-8')
+    return hash_hex.encode('utf-8')
 
 def dict_to_str(d: Dict, exclusion_list: List) -> str:
     return ",".join([f'{k}="{d[k]}"' for k in sorted(d.keys()) 
