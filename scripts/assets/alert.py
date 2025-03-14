@@ -294,8 +294,14 @@ class UploadAlert(AlertManager):
         # Remove uid & namespace_uid fields from each rule as they will not allow overriding existing rules
         for rule in rules:
             grafana_alert = rule.get("grafana_alert")
-            grafana_alert.pop("uid", None)
-            grafana_alert.pop("namespace_uid", None)
+            try:
+                grafana_alert.pop("uid", None)
+            except AttributeError:
+                log.debug("No uid or  found in alert config.")
+            try:
+                grafana_alert.pop("namespace_uid", None)
+            except AttributeError:
+                log.debug("No namespace_uid or  found in alert config.")
         file_content["rules"] = rules
         return file_content
 
