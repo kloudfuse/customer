@@ -1,5 +1,5 @@
-apm_trigger,service_name,span_name_pattern,span_name_matcher_op,threshold_operator,threshold_value,reducer,service_id_labels
-http_requests,frontendproxy,ingress,=,<,5,max,"availability_zone=us-west1-a;cloud_account_id=mvp-demo-301906;kf_platform=kubernetes;kube_cluster_name=demo-2-target;kube_namespace=otel-trace"
-error_rate,shippingservice,oteldemo.ShippingService/GetQuote,=~,>,5,min,"availability_zone=us-west1-a;cloud_account_id=mvp-demo-301906;kf_platform=kubernetes;kube_cluster_name=demo-2-target;kube_namespace=otel-demo-app-k8s"
-error_rate,recommendationservice,.*List.*,=~,>,5,min,"availability_zone=us-west1-a;cloud_account_id=mvp-demo-301906;kf_platform=kubernetes;kube_cluster_name=demo-2-target;kube_namespace=otel-demo-app-k8s"
-apdex,recommendationservice,.*List.*,=~,>,20,min,"availability_zone=us-west1-a;cloud_account_id=mvp-demo-301906;kf_platform=kubernetes;kube_cluster_name=demo-2-target;kube_namespace=otel-demo"
+apm_trigger,service_name,span_name_pattern,span_name_matcher_op,threshold_operator,threshold_value,reducer,service_id_labels,contact_points
+http_requests,frontendproxy,ingress,=,<,5,max,"availability_zone=us-west1-a;cloud_account_id=mvp-demo-301906;kf_platform=kubernetes;kube_cluster_name=demo-2-target;kube_namespace=otel-trace","grafana-default-email;support__kfuse_script_managed"
+error_rate,shippingservice,oteldemo.ShippingService/GetQuote,=~,>,5,min,"availability_zone=us-west1-a;cloud_account_id=mvp-demo-301906;kf_platform=kubernetes;kube_cluster_name=demo-2-target;kube_namespace=otel-demo-app-k8s","grafana-default-email"
+error_rate,recommendationservice,.*List.*,=~,>,5,min,"availability_zone=us-west1-a;cloud_account_id=mvp-demo-301906;kf_platform=kubernetes;kube_cluster_name=demo-2-target;kube_namespace=otel-demo-app-k8s","support__kfuse_script_managed"
+apdex,recommendationservice,.*List.*,=~,>,20,min,"availability_zone=us-west1-a;cloud_account_id=mvp-demo-301906;kf_platform=kubernetes;kube_cluster_name=demo-2-target;kube_namespace=otel-demo","grafana-default-email;support__kfuse_script_managed"

@@ -6,7 +6,6 @@ import os
 import argparse
 import csv
 import json
-import pprint
 from typing import Dict
 from jinja2 import Environment, FileSystemLoader
 from create_alerts import GrafanaClient
@@ -66,19 +65,12 @@ def populate_receivers(contact_points_csv_file: str) -> Dict:
 def merge_alertmanager_config(
         alertmanager_config: dict,
         cp_receivers: ContactPointReceivers) -> dict:
-    print('current alertmanager config')
-    pprint.pprint(alertmanager_config)
+
     existing_receivers = alertmanager_config['alertmanager_config']['receivers']
-    # print('current receivers -->')
-    # pprint.pprint(existing_receivers)
     unmanaged_receivers = [r for r in existing_receivers\
                      if not r['name'].endswith(CONTACT_POINT_NAME_SUFFIX)]
 
-    # print('updating receivers -->')
-    # pprint.pprint(existing_receivers)
     alertmanager_config["alertmanager_config"]["receivers"] = unmanaged_receivers + list(cp_receivers.receivers.values())
-    print('updated alertmanager config -->')
-    pprint.pprint(alertmanager_config)
     return alertmanager_config
 
 def create_contact_points(g: GrafanaClient, contact_points_file: str) -> None:
