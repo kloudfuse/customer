@@ -50,10 +50,9 @@ Upload alerts to a specific Grafana folder.
 ====
 [,code]
 ----
-sh
 python alert.py upload -s /path/to/alert.json \
     -f "My Alert Folder" \
-    -a http://<grafana-instance>/grafana \
+    -a https://<grafana-instance>/grafana \
     -u admin -p password
 ----
 ====
@@ -62,10 +61,9 @@ python alert.py upload -s /path/to/alert.json \
 ====
 [,code]
 ----
-sh
 python alert.py upload -d /path/to/alerts/directory \
     -f "My Alert Folder" \
-    -a http://<grafana-instance>/grafana \
+    -a https://<grafana-instance>/grafana \
     -u admin -p password
 ----
 ====
@@ -74,9 +72,8 @@ python alert.py upload -d /path/to/alerts/directory \
 ====
 [,code]
 ----
-sh
 python alert.py upload -m /path/to/root_directory \
-    -a http://<grafana-instance>/grafana \
+    -a https://<grafana-instance>/grafana \
     -u admin -p password \
     -f "placeholder"
 ----
@@ -91,10 +88,9 @@ Retrieve alerts from Grafana, and save them as JSON files.
 ====
 [,code]
 ----
-sh
 python alert.py download -s "Alert Name" -o /path/to/alert.json \
     -f "My Alert Folder" \
-    -a http://<grafana-instance>/grafana \
+    -a https://<grafana-instance>/grafana \
     -u admin -p password
 ----
 ====
@@ -103,10 +99,9 @@ python alert.py download -s "Alert Name" -o /path/to/alert.json \
 ====
 [,code]
 ----
-sh
 python alert.py download -d -o /path/to/alerts/download/ \
     -f "My Alert Folder" \
-    -a http://<grafana-instance>/grafana \
+    -a https://<grafana-instance>/grafana \
     -u admin -p password
 ----
 ====
@@ -115,9 +110,8 @@ python alert.py download -d -o /path/to/alerts/download/ \
 ====
 [,code]
 ----
-sh
 python alert.py download -m -o /path/to/alerts/download/ \
-    -a http://<grafana-instance>/grafana \
+    -a https://<grafana-instance>/grafana \
     -u admin -p password \
     -f "placeholder"
 ----
@@ -132,10 +126,9 @@ Remove alerts from Grafana.
 ====
 [,code]
 ----
-sh
 python alert.py delete -s "Alert Name" \
     -f "My Alert Folder" \
-    -a http://<grafana-instance>/grafana \
+    -a https://<grafana-instance>/grafana \
     -u admin -p password
 ----
 ====
@@ -144,9 +137,8 @@ python alert.py delete -s "Alert Name" \
 ====
 [,code]
 ----
-sh
 python alert.py delete -d -f "My Alert Folder" \
-    -a http://<grafana-instance>/grafana \
+    -a https://<grafana-instance>/grafana \
     -u admin -p password
 ----
 ====
@@ -163,10 +155,9 @@ Upload dashboards to a specified folder in Grafana.
 ====
 [,code]
 ----
-sh
 python dashboard.py upload -s /path/to/dashboard.json \
     -f "My Dashboard Folder" \
-    -a http://<grafana-instance>/grafana \
+    -a https://<grafana-instance>/grafana \
     -u admin -p password
 ----
 ====
@@ -175,10 +166,9 @@ python dashboard.py upload -s /path/to/dashboard.json \
 ====
 [,code]
 ----
-sh
 python dashboard.py upload -d /path/to/dashboards/directory \
     -f "My Dashboard Folder" \
-    -a http://<grafana-instance>/grafana \
+    -a https://<grafana-instance>/grafana \
     -u admin -p password
 ----
 ====
@@ -187,9 +177,8 @@ python dashboard.py upload -d /path/to/dashboards/directory \
 ====
 [,code]
 ----
-sh
 python dashboard.py upload -m /path/to/dashboards_root_directory \
-    -a http://<grafana-instance>/grafana \
+    -a https://<grafana-instance>/grafana \
     -u admin -p password \
     -f "all"
 ----
@@ -203,10 +192,9 @@ Retrieve dashboards from Grafana, and save them as JSON files.
 ====
 [,code]
 ----
-sh
 python dashboard.py download -s "Dashboard Name" -o /path/to/dashboard.json \
     -f "My Dashboard Folder" \
-    -a http://<grafana-instance>/grafana \
+    -a https://<grafana-instance>/grafana \
     -u admin -p password
 ----
 ====
@@ -215,10 +203,9 @@ python dashboard.py download -s "Dashboard Name" -o /path/to/dashboard.json \
 ====
 [,code]
 ----
-sh
 python dashboard.py download -d -o /path/to/dashboards/download/ \
     -f "My Dashboard Folder" \
-    -a http://<grafana-instance>/grafana \
+    -a https://<grafana-instance>/grafana \
     -u admin -p password
 ----
 ====
@@ -227,9 +214,8 @@ python dashboard.py download -d -o /path/to/dashboards/download/ \
 ====
 [,code]
 ----
-sh
 python dashboard.py download -m -o /path/to/dashboards/download/ \
-    -a http://<grafana-instance>/grafana \
+    -a https://<grafana-instance>/grafana \
     -u admin -p password \
     -f "all"
 ----
