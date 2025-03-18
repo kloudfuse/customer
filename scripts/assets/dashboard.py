@@ -212,7 +212,7 @@ def parse_args():
     return parser.parse_args()
 
 class DashboardManager(object):
-    from scripts.assets.common.grafana_client import GrafanaClient
+    from common.grafana_client import GrafanaClient
 
     def __init__(
             self,
@@ -266,7 +266,6 @@ class UploadDashboard(DashboardManager):
         )
 
     def process_args(self, single_file, directory, multi_directory):
-        log.error("single_file={}, directory={}, multi_directory={}", single_file, directory, multi_directory)
         if single_file:
             self._create_dashboard_from_one_file(single_file)
         elif directory:
@@ -352,9 +351,7 @@ class DownloadDashboard(DashboardManager):
         find_folder_api = "/api/folders"
         folders_response = self.gc._http_get_request_to_grafana(find_folder_api)
 
-        log.error("folders_response={}", folders_response)
         for folder in folders_response[0]:
-            log.error("folder={}", folder)
             folder_name = folder["title"]
             folder_output_dir = os.path.join("./", folder_name)
             self._download_all_dashboards_from_folder(folder_name=folder_name, directory=folder_output_dir)
