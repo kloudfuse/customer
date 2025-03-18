@@ -341,10 +341,8 @@ class GrafanaClient:
             dashboard_uid = self.__get_dashboard_uid_by_name(dashboard_identifier)
         else:
             dashboard_uid = dashboard_identifier
-        log.error("Dashboard UID={0} name {1}".format(dashboard_uid, dashboard_identifier))
         
         response_json, status = self._http_get_request_to_grafana(path=(f"/api/dashboards/uid/{dashboard_uid}"))
-        log.error("Status {0} Response {1}".format(status, response_json))
         if status:
             return response_json, True
         else:   
