@@ -308,7 +308,8 @@ def create_alerts_for_services(g: GrafanaClient, alerts_config_csv: str) -> None
     te = ThresholdExprGen(alerts_config_csv)
     csv_alerts = te.generate_alert_rules(alert_tmpls=te.get_alert_expr_tmpls())
     existing_alerts = get_existing_alert_rules(g)
-    alerts_to_update, alerts_to_delete = process_alerts_to_delete_and_update(existing_alerts, csv_alerts)
+    delete_if_not_exist = args.delete_csv_alerts_if_not_exist
+    alerts_to_update, alerts_to_delete = process_alerts_to_delete_and_update(existing_alerts, csv_alerts, delete_if_not_exist)
     
     for group_name in alerts_to_delete:
         print(f"Deleting alerts from group {group_name}")
@@ -330,14 +331,21 @@ def create_alerts_for_services(g: GrafanaClient, alerts_config_csv: str) -> None
 
     return
 
-def process_alerts_to_delete_and_update(existing_alerts: Dict, csv_alerts: Dict) -> Tuple:
+def process_alerts_to_delete_and_update(existing_alerts: Dict, csv_alerts: Dict, delete_if_not_exist: bool) -> Tuple:
     alerts_to_update = {}
     alerts_to_delete = []
 
     for group_name, rules_dict in existing_alerts.items():
-        # Alert rules are no longer in CSV file - so delete them
-        if group_name not in csv_alerts:
-            alerts_to_delete.append(group_name)
+        # Alert rules are no longer in CSV file - so delete them if the flag delete_if_not_exist is set
+        skip_update = False
+        if group_name not in csv_alerts: 
+            if delete_if_not_exist: 
+                alerts_to_delete.append(group_name)
+                continue
+            else:
+                skip_update = True
+
+        if skip_update:
             continue
         csv_alerts_dict = csv_alerts.get(group_name, {})
         allowed_keys = ["exprs", "reducers", "conditions", "titles"]
@@ -417,6 +425,10 @@ if __name__ == "__main__":
     parser.add_argument(
         "-v", "--no-verify-ssl", action='store_false',
         help="Verify SSL certificate (default: True)"
+    )
+    parser.add_argument(
+        "-d", "--delete-csv-alerts-if-not-exist", action='store_true',
+        help="Delete alert rules in CSV file if they don't exist in CSV file"
     )
     args = parser.parse_args()
     gc = GrafanaClient(grafana_server=args.grafana_server, grafana_username=args.grafana_username,
