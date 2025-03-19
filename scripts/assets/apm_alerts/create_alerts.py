@@ -337,15 +337,9 @@ def process_alerts_to_delete_and_update(existing_alerts: Dict, csv_alerts: Dict,
 
     for group_name, rules_dict in existing_alerts.items():
         # Alert rules are no longer in CSV file - so delete them if the flag delete_if_not_exist is set
-        skip_update = False
         if group_name not in csv_alerts: 
             if delete_if_not_exist: 
                 alerts_to_delete.append(group_name)
-                continue
-            else:
-                skip_update = True
-
-        if skip_update:
             continue
         csv_alerts_dict = csv_alerts.get(group_name, {})
         allowed_keys = ["exprs", "reducers", "conditions", "titles"]
