@@ -154,21 +154,24 @@ class ExprGen:
                 reducer = row["reducer"]
                 condition = "$B " + row["threshold_operator"] + " " + row["threshold_value"]
                 
-                base_title = name + "_" + service_hash
-
-                # Ensure title uniqueness to add alerts in same group
-                if base_title in title_counts:
-                    title_counts[base_title] += 1
-                    unique_title = f"{base_title}_{title_counts[base_title]}"
-                else:
-                    title_counts[base_title] = 1
-                    unique_title = base_title
                 group_name = service_name + "_" + service_hash + "_group_1m_1"  
                 d = alert_rules.get(group_name, {})
+
+                if not alert_title:
+                    base_title = name + "_" + service_hash
+                # Ensure title uniqueness to add alerts in same group
+                    if base_title in title_counts:
+                        title_counts[base_title] += 1
+                        unique_title = f"{base_title}_{title_counts[base_title]}"
+                    else:
+                        title_counts[base_title] = 1
+                        unique_title = base_title
+                    d.setdefault('titles', []).append(unique_title)
+                else:
+                    d.setdefault('titles', []).append(alert_title)
                 d.setdefault('exprs', []).append(expr)
                 d.setdefault('reducers', []).append(reducer)
                 d.setdefault('conditions', []).append(condition)
-                d.setdefault('titles', []).append(unique_title)
                 d.setdefault('trigger_type', []).append(self._extra_data_dict[name].get("apmTriggerType"))
                 d.setdefault('span_type', []).append(self._extra_data_dict[name].get("spanType"))
                 d.setdefault('service_hash', []).append(service_hash)
