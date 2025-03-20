@@ -100,7 +100,7 @@
                                         "params":[
                                             "{{ rule.params }}"
                                         ],
-                                        "type":"{{ rule.conditions_type }}"
+                                        "type":"{{ rule.condition_type }}"
                                     }
                                 }
                             ],
@@ -252,7 +252,7 @@
                                         "params":[
                                             "{{ rule.params }}"
                                         ],
-                                        "type":"{{ rule.conditions_type }}"
+                                        "type":"{{ rule.condition_type }}"
                                     }
                                 }
                             ],

@@ -150,9 +150,12 @@ class ExprGen:
                 service_hash = service_name_hash.split("_")[1]
                 expr = self.__get_alert_expr(row, alert_tmpls)
                 contact_points = row["contact_points"].split(";")
+                th_operator = row["threshold_operator"]
+                th_value = row["threshold_value"]
+                alert_title = row["alert_name"]
 
                 reducer = row["reducer"]
-                condition = "$B " + row["threshold_operator"] + " " + row["threshold_value"]
+                condition = "$B " + th_operator + " " + th_value
                 
                 group_name = service_name + "_" + service_hash + "_group_1m_1"  
                 d = alert_rules.get(group_name, {})
@@ -179,7 +182,8 @@ class ExprGen:
                 d.setdefault('unique_labels', []).append(labels_dict)
                 contact_points_dict = {f"{item}" : "true" for item in contact_points}
                 d.setdefault('contact_points', []).append(contact_points_dict)
-
+                d.setdefault('threshold_operator', []).append(th_operator)
+                d.setdefault('threshold_value', []).append(th_value)
                 d['span_name'] = row["span_name_pattern"]
                 d.setdefault('service_name', []).append(service_name)
                 alert_rules[group_name] = d
@@ -267,6 +271,8 @@ def generate_alert_rules(alert_rules_dict: Dict, **kwargs) -> Dict:
         span_name = d.get("span_name", "")
         span_types = d.get("span_type", "")
         contact_points = d.get("contact_points", [])
+        th_operators = d.get("threshold_operator", [])
+        th_values = d.get("threshold_value", [])
         for i, expr in enumerate(exprs):
             title = titles[i]
             extra_data = {}
@@ -296,7 +302,9 @@ def generate_alert_rules(alert_rules_dict: Dict, **kwargs) -> Dict:
                 alert_rule_title=title,
                 alert_rule_datasource_uid=ds_uid,
                 alert_rule_condition_expression=conditions[i],
-                alert_rule_reducer_type=reducers[i]
+                alert_rule_reducer_type=reducers[i],
+                alert_rule_condition_operator=th_operators[i],
+                alert_rule_condition_threshold=th_values[i]
             )
 
             alert_rules[group_name].append(alert_rule)
