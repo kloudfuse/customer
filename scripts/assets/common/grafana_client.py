@@ -240,27 +240,29 @@ class GrafanaClient:
             return None, False
 
         new_rules = []
-        try:
-            rules = existing_alerts[0][folder_name][0]["rules"]
+
+        rule_group_index = 0
+        try: 
+            for index, group in enumerate(existing_alerts[0][folder_name]):
+                for r in group["rules"]:
+                    rule_title = r["grafana_alert"]["title"]
+                    if all_alerts or rule_title == alert_name:
+                        log.debug("Keeping alert: {0}".format(rule_title))
+                        new_rules.append(r)
+                        rule_group_index = index
+                    else:
+                        log.debug("Skipping alert: {0}".format(rule_title))
         except KeyError:
             # Skip this if the key does not exist
-            rules = None
             log.debug("KeyError: Skipping folder_name={} as it does not exist in existing_alerts", folder_name)
             return None, False
-        for r in rules:
-            rule_title = r["grafana_alert"]["title"]
-            if all_alerts or rule_title == alert_name:
-                log.debug("Keeping alert: {0}".format(rule_title))
-                new_rules.append(r)
-            else:
-                log.debug("Skipping alert: {0}".format(rule_title))
 
         if len(new_rules) == 0:
             log.warning("Alert not found: {0}".format(alert_name))
-            return None, False
+            return None, False            
 
-        existing_alerts[0][folder_name][0]["rules"] = new_rules
-        return existing_alerts[0][folder_name][0], True
+        existing_alerts[0][folder_name][rule_group_index]["rules"] = new_rules
+        return existing_alerts[0][folder_name][rule_group_index], True
     
     def download_alerts_folder(self, folder_name):
         log.debug("Download all alerts from folder={0}".format(
