@@ -23,5 +23,5 @@ fi
 DBS=("alertsdb" "beffedb" "hydrationdb" "logsconfigdb" "rbacdb" "apmconfigdb")
 
 for DB in "${DBS[@]}"; do
-  kubectl -n "$NAMESPACE exec -it kfuse-configdb-0 -- bash -c PGPASSWORD=$PGPW pg_dump -U postgres -d $DB" | gzip | aws s3 cp - "$S3_PATH/$DB.sql.gz"
+  kubectl -n "$NAMESPACE" exec -it kfuse-configdb-0 -- bash -c "PGPASSWORD=$PGPW pg_dump -U postgres -d $DB" | gzip | aws s3 cp - "$S3_PATH/$DB.sql.gz"
 done
