@@ -15,7 +15,7 @@ Sudden increase in the incoming volume of logs, metrics, traces, RUM, etc. will 
 If the incoming volume increase is temporary, the user visible impact will be temporary and kloudfuse cluster will recover on its own.
 If the incoming volume increase is longer term (or permanent), kloudfuse cluster will need to be scaled.
 
-Executing this runbook requires additional investigation; therefore, this runbook should not be executed without involvement of the kloudfuse support.
+**Executing this runbook requires additional investigation; therefore, this runbook should not be executed without involvement of the kloudfuse support.**
 
 To update the instance type (with higher resources) follow the steps below:
 ### Preparation
