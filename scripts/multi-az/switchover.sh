@@ -26,7 +26,7 @@ echo "$COMMAND"
 
 read -p "Do you want to proceed? (y/n): " CONFIRMATION
 
-if [[ "$CONFIRMATION" != "y" && "$CONFIRMATION" != "Y" ]]; then
+if [ "$CONFIRMATION" != "y" ] && [ "$CONFIRMATION" != "Y" ]; then
   echo "Operation cancelled."
   exit 1
 fi
