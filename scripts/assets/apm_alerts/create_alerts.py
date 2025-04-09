@@ -76,7 +76,7 @@ class ExprGen:
                 "spanType": "http"
             },
             "average_latency": {
-                "apmTriggerType": "average",
+                "apmTriggerType": "avg",
                 "spanType": "http"
             },
             "apdex": {
